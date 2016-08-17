@@ -4,5 +4,10 @@
 # Licensed under Apache 2.0
 #
 
+import os
 import setuptools
-setuptools.setup(setup_requires=['pbr'], pbr=True)
+
+os.environ['SKIP_GENERATE_AUTHORS'] = '1'
+os.environ['SKIP_WRITE_GIT_CHANGELOG'] = '0'
+
+dist = setuptools.setup(setup_requires=['pbr'], pbr=True)
