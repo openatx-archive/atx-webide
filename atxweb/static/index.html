@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" />
+    <title>Atx Web IDE</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="{{static_url('css/bootstrap-3.3.5.min.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/jquery.fancybox.min.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/index.css')}}">
+  </head>
+  <body>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid"> <!-- container class -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">ATX IDE</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/">Home</a></li>
+              <!-- <li><a href="#about">About</a></li> -->
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container-fluid" id='main-content'>
+      <div class="col-md-12">
+<!--       <div id="app">
+        {{! message }}
+      </div> -->
+        <!-- <div class="col-md-3">
+          <h3>图片列表
+            <button id="btn-imgrefresh" type="button" class="btn btn-default btn-sm">Refresh</button>
+          </h3>
+          <ul class="list-group">
+            {% if len(images) > 0 %}
+              {% for basename, image_path in images %}
+              <li class="list-group-item">
+                {{basename}}
+                <a href="/static_imgs/{{image_path}}" class="pull-right fancybox" title="{{image_path}}" rel="gallery">
+                  <img class="img-rounded" style="height: 2em; border: 2px solid gray; padding: 1px" src="/static_imgs/{{image_path}}"/>
+                </a>
+              </li>
+              {% end %}
+            {% else %}
+              没有图片
+            {% end %}
+          </ul>
+        </div> -->
+        <div id="left-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-9'">
+          <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active">
+              <a href="#blocklyDiv" aria-controls="blocklyDiv" role="tab" data-toggle="tab">Blockly</a>
+            </li>
+            <li role="presentation">
+              <a href="#pythonDiv" aria-controls="pythonDiv" role="tab" data-toggle="tab">Python</a>
+            </li>
+            <li role="presentation">
+              <a href="#imagesDiv" aria-controls="imagesDiv" role="tab" data-toggle="tab">Images</a>
+            </li>
+            <li class="pull-right">
+              <a href="#play">
+                <span class="glyphicon glyphicon-play"></span>
+                运行
+              </a>
+            </li>
+            <li class="pull-right">
+              <a href="#save">
+                <span class="glyphicon glyphicon-floppy-saved"></span>
+                保存
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <div id="blocklyDiv" role="tabpanel" class="tab-pane active">
+            </div>
+            <div id="pythonDiv" role="tabpanel" class="tab-pane">
+              <pre class='code-python'></pre>
+            </div>
+            <div id="imagesDiv" role="tabpanel" class="tab-pane">
+              <ul class="clearfix"></ul>
+            </div>
+          </div>
+          <div v-show="!landscape">
+            <h4>Console
+              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+            </h4>
+            <pre class='console'></pre>
+          </div>
+        </div>
+        <div id="right-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-3'">
+          <div>
+            <h4>Screen
+              <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存选区</button>
+              <button type="button" id="btn-refresh-screen" class="btn btn-default btn-xs">刷新</button>
+              <button type="button" v-on:click="toggleLandscape" class="btn btn-default btn-xs">宽屏切换</button>
+            </h4>
+            <div id="screen-wrapper" style="border: 1px solid red; position: relative;">
+              <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
+              <div id="screen-crop" class="image-crop"></div>
+              <canvas id="canvas" width="40" height="10">
+                Browser not support canvas
+              </canvas>
+            </div>
+            <div class='status-bar'>Status: <span></span></div>
+            <!-- <pre class='code-python'></pre> -->
+          </div>
+          <div v-show="landscape">
+            <h4>Console
+              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+            </h4>
+            <pre class='console'></pre>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <xml id="toolbox" style="display: none">
+      <category name="ATX" colour="160">
+        <block type="atx_connect"></block>
+        <block type="atx_click"></block>
+        <block type="atx_screenshot">
+          <value name="FILENAME">
+            <block type="text">
+              <field name="TEXT">screen.png</field>
+            </block>
+          </value>
+        </block>
+        <block type="atx_click_image">
+          <value name="ATX_PATTERN">
+            <block type="atx_image_file">
+            </block>
+          </value>
+        </block>
+        <block type="atx_click_image">
+        </block>
+        <block type="atx_image_file">
+        </block>
+        <block type="atx_image_pattern">
+          <value name="FILENAME">
+            <block type="atx_image_file"></block>
+          </value>
+        </block>
+        <block type="atx_image_pattern_offset">
+          <value name="FILENAME">
+            <block type="atx_image_crop_preview">
+              <value name="IMAGE_CROP">
+                <block type="atx_image_crop"></block>
+              </value>
+            </block>
+          </value>
+        </block>
+        <block type="atx_blank"></block>
+      </category>
+      <category name="逻辑" colour="200">
+        <block type="controls_if"></block>
+        <block type="logic_compare"></block>
+        <block type="controls_repeat_ext"></block>
+      </category>
+      <category name="变量" colour="200">
+        <block type="math_number"></block>
+        <block type="math_arithmetic"></block>
+        <block type="text"></block>
+      </category>
+      <category name="常用" colour="200">
+        <block type="text_print">
+          <value name="TEXT">
+            <shadow type="text">
+              <field name="TEXT">abc</field>
+            </shadow>
+          </value>
+        </block>
+      </category>
+      <category name="扩展" colour="200">
+        <block type="text">
+          <field name="TEXT">ex.server_call(...) ex.login</field>
+        </block>
+      </category>
+    </xml>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="{{static_url('js/jquery-1.11.3.min.js')}}"></script>
+    <script src="{{static_url('js/jquery.mousewheel.min.js')}}"></script>
+    <script src="{{static_url('js/jquery.fancybox.pack.js')}}"></script>
+    <script src="{{static_url('js/notify.js')}}"></script>
+    <script src="{{static_url('js/bootstrap-3.3.5.min.js')}}"></script>
+    <!-- <script src="//127.0.0.1:8000/blockly_compressed.js"></script>
+    <script src="//127.0.0.1:8000/blocks_compressed.js"></script>
+    <script src="//127.0.0.1:8000/msg/js/en.js"></script>
+    <script src="//127.0.0.1:8000/python_compressed.js"></script> -->
+    <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
+    <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>
+    <script src="{{static_url('blockly/msg/js/en.js')}}"></script>
+    <script src="{{static_url('blockly/python_compressed.js')}}"></script>
+
+    <script src="{{static_url('js/vue.min.js')}}"></script>
+    <script src="{{static_url('js/index.js')}}"></script>
+
+    <!-- Google Analytics Code -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-55124209-6', 'auto');
+    ga('send', 'pageview');
+    </script>
+  </body>
+</html>

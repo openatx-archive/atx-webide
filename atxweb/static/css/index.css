@@ -1,0 +1,54 @@
+html, body{
+  height: 100%;
+}
+
+.container-full {
+  margin: 0 auto;
+  width: 100%;
+}
+
+.phone-screen {
+	min-height: 8em;
+	width: 100%;
+	text-align: center;
+}
+pre.console {
+	height: 10em;
+	overflow: auto;
+}
+
+.point {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 10px;
+  border: 1px solid red;
+  pointer-events: none;
+}
+
+.image-rect, .ui-rect, .image-crop {
+  position: absolute;
+  border: 2px solid red;
+  pointer-events: none;
+}
+
+.clearfix:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#imagesDiv > ul > li {
+  float: left;
+  padding: 10px;
+  list-style: none;
+  text-align: center;
+  height: 140px;
+}
+
+#imagesDiv img {
+  max-width: 100px;
+  max-height: 100px;
+}
