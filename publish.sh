@@ -18,5 +18,4 @@ echo 'Requires-Dist: atx (>=1.0.13)' >> dist/PKG-INFO
 echo 'Upload PKG-INFO at: https://pypi.python.org/pypi?%3Aaction=submit_form'
 
 echo 'uploading..'
-twine upload dist/*
-
+twine upload dist/* --config-file=.pypirc

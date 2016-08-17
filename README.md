@@ -2,9 +2,9 @@
 Web-based visual editor for generating atx testcase.
 
 ## Dependency
-- AutomatorX
-- futures
-- tornado
+- atx (https://pypi.python.org/pypi/atx/)
+- futures (https://pypi.python.org/pypi/futures/)
+- tornado (https://pypi.python.org/pypi/tornado/)
 
 ## Installation
 using pip:
@@ -36,6 +36,11 @@ optional arguments:
                         Android serial or iOS unid
   --ios                 use iOS device
 ```
+
+## Todo
+- [ ] track history screens.
+- [ ] select device from web
+- [ ] control device from web
 
 ## Refs
 1. [ATX (AutomatorX)](https://github.com/codeskyblue/AutomatorX)
