@@ -6,3 +6,4 @@ dist/
 ChangeLog
 AUTHORS
 *.egg-info/
+publish.sh
