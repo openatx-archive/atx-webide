@@ -12,5 +12,5 @@ pip install atx-webide
 ```
 
 ## Refs
-1. ![ATX (AutomatorX)](https://github.com/codeskyblue/AutomatorX)
-2. ![atx-blockly](https://github.com/openatx/blockly)
+1. [ATX (AutomatorX)](https://github.com/codeskyblue/AutomatorX)
+2. [atx-blockly](https://github.com/openatx/blockly)
