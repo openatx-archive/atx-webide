@@ -8,7 +8,6 @@ import socket
 import time
 import json
 import traceback
-import shutil
 import locale
 import re
 
