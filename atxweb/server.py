@@ -10,6 +10,7 @@ import json
 import traceback
 import shutil
 import locale
+import re
 
 import cv2
 import tornado.ioloop
@@ -258,6 +259,15 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
     global IMAGE_PATH
     if not os.path.exists('screenshots'):
         os.makedirs('screenshots')
+    else:
+        # cleanup unused screenshots
+        if os.path.exists('blockly.py'):
+            screen_pat = re.compile('screenshots/screen_.*\.png')
+            used_screens = screen_pat.findall(open('blockly.py').read())
+            for s in os.listdir('screenshots'):
+                if 'screenshots/%s' % s not in used_screens:
+                    os.remove('screenshots/%s' % s)
+
     IMAGE_PATH.append('screenshots')
 
     application = make_app({
@@ -285,7 +295,6 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
     log.info("Server started.")
     log.info("Listening port on 127.0.0.1:{}".format(web_port))
     tornado.ioloop.IOLoop.instance().start()
-
 
 if __name__ == "__main__":
     run()
