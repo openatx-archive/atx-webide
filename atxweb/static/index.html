@@ -85,6 +85,7 @@
             </h4>
             <div id="screen-wrapper" style="border: 1px solid red; position: relative;">
               <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
+              <div id="screen-overlays" class="full"></div>
               <div id="screen-crop" class="image-crop"></div>
               <canvas id="canvas" width="40" height="10">
                 Browser not support canvas
@@ -121,19 +122,29 @@
           </value>
         </block>
         <block type="atx_click_image">
-        </block>
-        <block type="atx_image_file">
-        </block>
-        <block type="atx_image_pattern">
-          <value name="FILENAME">
-            <block type="atx_image_file"></block>
+          <value name="ATX_PATTERN">
+            <block type="atx_image_file">
+            </block>
           </value>
         </block>
-        <block type="atx_image_pattern_offset">
-          <value name="FILENAME">
-            <block type="atx_image_crop_preview">
-              <value name="IMAGE_CROP">
-                <block type="atx_image_crop"></block>
+        <block type="atx_click_image">
+          <value name="ATX_PATTERN">
+            <block type="atx_image_pattern">
+              <value name="FILENAME">
+                <block type="atx_image_file"></block>
+              </value>
+            </block>
+          </value>
+        </block>
+        <block type="atx_click_image">
+          <value name="ATX_PATTERN">
+            <block type="atx_image_pattern_offset">
+              <value name="FILENAME">
+                <block type="atx_image_crop_preview">
+                  <value name="IMAGE_CROP">
+                    <block type="atx_image_crop"></block>
+                  </value>
+                </block>
               </value>
             </block>
           </value>

@@ -230,11 +230,6 @@ $(function(){
     sendWebsocket({command: (isPlay ? 'stop' : 'run'), code: g.pythonDebugText})
   })
 
-  $('#btn-image-refresh').click(function(event){
-    event.preventDefault();
-    sendWebsocket({command: 'refresh'})
-  })
-
   $('.btn-clear-console').click(function(){
     $('pre.console').text('');
   })
@@ -290,6 +285,7 @@ $(function(){
         $this.notify(err, 'error')
       }
       $this.prop('disabled', false);
+      sendWebsocket({command: 'refresh'})
     })
   })
 
@@ -378,15 +374,14 @@ $(function(){
 
   //------------ canvas overlay parts ------------//
   function getCanvasPos(x, y) {
-      var rect = canvas.getBoundingClientRect();
-      var left = M.screenRatio * x + rect.left,
-          top  = M.screenRatio * y + rect.top;
+      var left = M.screenRatio * x,
+          top  = M.screenRatio * y;
       return {left, top};
   }
 
   var overlays = {
     "atx_click" : {
-      $el: $('<div>').addClass('point').hide().appendTo('body'),
+      $el: $('<div>').addClass('point').hide().appendTo('#screen-overlays'),
       update: function(data){
         var pos = getCanvasPos(data.x, data.y);
         this.$el.css('left', pos.left+'px')
@@ -394,7 +389,7 @@ $(function(){
       },
     },
     "atx_click_image" : {
-      $el: $('<div>').addClass('image-rect').hide().appendTo('body')
+      $el: $('<div>').addClass('image-rect').hide().appendTo('#screen-overlays')
           .append($('<div>').addClass('point')),
       update: function(data){
         var p1 = getCanvasPos(data.x1, data.y1),
@@ -409,7 +404,7 @@ $(function(){
       },
     },
     "atx_click_ui" : {
-      $el: $('<div>').addClass('ui-rect').hide().appendTo('body'),
+      $el: $('<div>').addClass('ui-rect').hide().appendTo('#screen-overlays'),
       update: function(data){
         var p1 = getCanvasPos(data.x1, data.y1),
             p2 = getCanvasPos(data.x2, data.y2),
@@ -672,7 +667,7 @@ $(function(){
   }
 
   function onUISelectedChange(evt){
-    if (evt.type != 'ui' || evt.element != 'selected') {return;}
+    if (evt.type != Blockly.Events.UI || evt.element != 'selected') {return;}
     if (evt.oldValue != null) {
       var oldblk = workspace.getBlockById(evt.oldValue);
       if (oldblk === null) { return;}
