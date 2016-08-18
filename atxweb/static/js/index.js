@@ -90,6 +90,7 @@ $(function(){
             '已刷新',
             {className: 'success', position: 'right'}
           );
+          restoreWorkspace();
           break;
         case 'run':
           changeRunningStatus(data.status, data.notify);
@@ -210,8 +211,6 @@ $(function(){
       })
   }
 
-  restoreWorkspace();
-
   function sendWebsocket(message){
     var data = JSON.stringify(message);
     M.ws.send(data);
@@ -280,12 +279,8 @@ $(function(){
     })
   })
 
-  // global, for track screenshots
-  var screen_idx = 1;
   $('#btn-refresh-screen').click(function(){
-    // M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
-    M.screenURL = '/images/screenshot?v=t' + screen_idx;
-    screen_idx += 1;
+    M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
     var $this = $(this);
     $this.notify('Refreshing', {className: 'info', position: 'top'})
     $this.prop('disabled', true);
@@ -355,7 +350,7 @@ $(function(){
   }
 
   M.canvas = document.getElementById('canvas');
-  M.screenURL = '/images/screenshot?v=t0';
+  M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
   window.addEventListener('resize', onResize, false);
   onResize();
 
@@ -689,7 +684,9 @@ $(function(){
     if (evt.newValue != null) {
       var newblk = workspace.getBlockById(evt.newValue);
       showOverlayPart(newblk.type, newblk);
+      useBlockScreen(newblk);
     } else {
+      useBlockScreen();
       crop_bounds.bound = null;
       $('#screen-crop').css({'left':'0px', 'top':'0px',
           'width':'0px', 'height':'0px'}).show();
@@ -700,9 +697,29 @@ $(function(){
 
   // track screenshot related to each block
   var block_screen = {};
-  M.block_screen = block_screen;
+  function useBlockScreen(blk) {
+    var conn;
+    if (blk && blk.type == 'atx_click_image') {
+      conn = blk.getInput('ATX_PATTERN').connection.targetConnection;
+      blk = conn && conn.sourceBlock_;
+    }
+    if (blk && blk.type == 'atx_image_pattern_offset') {
+      conn = blk.getInput('FILENAME').connection.targetConnection;
+      blk = conn && conn.sourceBlock_;
+    }
+    if (blk && blk.type == 'atx_image_crop_preview') {
+      conn = blk.getInput('IMAGE_CROP').connection.targetConnection;
+      blk = conn && conn.sourceBlock_;
+    }
+    var screen = blk && block_screen[blk.id] || vm.latest_screen,
+        url = window.blocklyBaseURL + screen;
+    if (url != M.canvas.src) {
+      loadCanvasImage(M.canvas, window.blocklyBaseURL + screen);
+    }
+  }
+
   function onUIFieldChange(evt) {
-    if (evt.type != Blockly.Events.UI || evt.element != 'field') {return;}
+    if (evt.type != Blockly.Events.CHANGE || evt.element != 'field') {return;}
     var blk = workspace.getBlockById(evt.blockId);
     if (blk.type == 'atx_image_crop' && evt.name == 'FILENAME') {
       block_screen[evt.blockId] = evt.newValue;

@@ -27,7 +27,6 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="/">Home</a></li>
-              <!-- <li><a href="#about">About</a></li> -->
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -35,28 +34,6 @@
 
     <div class="container-fluid" id='main-content'>
       <div class="col-md-12">
-<!--       <div id="app">
-        {{! message }}
-      </div> -->
-        <!-- <div class="col-md-3">
-          <h3>图片列表
-            <button id="btn-imgrefresh" type="button" class="btn btn-default btn-sm">Refresh</button>
-          </h3>
-          <ul class="list-group">
-            {% if len(images) > 0 %}
-              {% for basename, image_path in images %}
-              <li class="list-group-item">
-                {{basename}}
-                <a href="/static_imgs/{{image_path}}" class="pull-right fancybox" title="{{image_path}}" rel="gallery">
-                  <img class="img-rounded" style="height: 2em; border: 2px solid gray; padding: 1px" src="/static_imgs/{{image_path}}"/>
-                </a>
-              </li>
-              {% end %}
-            {% else %}
-              没有图片
-            {% end %}
-          </ul>
-        </div> -->
         <div id="left-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-9'">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active">
@@ -114,7 +91,6 @@
               </canvas>
             </div>
             <div class='status-bar'>Status: <span></span></div>
-            <!-- <pre class='code-python'></pre> -->
           </div>
           <div v-show="landscape">
             <h4>Console
