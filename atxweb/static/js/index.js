@@ -498,11 +498,12 @@ $(function(){
     }
     // update model in blockly
     var pos = getMousePos(this, evt);
+    var rect = canvas.getBoundingClientRect();
     blk.setFieldValue(pos.x, 'X');
     blk.setFieldValue(pos.y, 'Y');
     // update point position
     var $point = overlays['atx_click'].$el;
-    $point.css('left', evt.pageX+'px').css('top', evt.pageY+'px');
+    $point.css('left', (evt.pageX-rect.left)+'px').css('top', (evt.pageY-rect.top)+'px');
   });
 
   // --------- selected is atx_click_image ------------
@@ -548,12 +549,13 @@ $(function(){
 
     // update image-rect position
     var $rect = overlays['atx_click_image'].$el,
+        rect = canvas.getBoundingClientRect(),
         left = rect_bounds.start.pageX,
         top = rect_bounds.start.pageY,
         width = Math.max(rect_bounds.end.pageX - left, 10),
         height = Math.max(rect_bounds.end.pageY - top, 10);
-    $rect.css('left', left+'px')
-         .css('top', top+'px')
+    $rect.css('left', (left-rect.left)+'px')
+         .css('top', (top-rect.top)+'px')
          .css('width', width+'px')
          .css('height', height+'px');
     $rect.children().css('left', '50%').css('top', '50%');
