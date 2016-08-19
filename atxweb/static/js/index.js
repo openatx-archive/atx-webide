@@ -417,16 +417,17 @@ $(function(){
       },
     },
     "atx_swipe" : {
-      $el: $('<div>').hide().appendTo('body')
-          .append($('<div>').addClass('point')) // start point
-          .append($('<div>').addClass('point')) // end point
-          .append($('<svg>')), // line from start to end
+      $el: $('#overlays-swipe').addClass('full').hide(),
       update: function(data){
         var p1 = getCanvasPos(data.x1, data.y1),
             p2 = getCanvasPos(data.x2, data.y2);
-        this.$el.children('div:first').css('left', p1.left+'px').css('top', p1.top+'px');
-        this.$el.children('div:last').css('left', p2.left+'px').css('top', p2.top+'px');
-        this.$el.children('svg').html(''); // TODO line up
+        var $svg = this.$el.children('svg'),
+            cstart = '<circle cx="'+p1.left+'" cy="'+p1.top+'" fill="black" r="3"></circle>'
+            cend = '<circle cx="'+p2.left+'" cy="'+p2.top+'" fill="white" r="3"></circle>'
+            line = '<line stroke="black" stroke-width="2"' +
+                   ' x1="'+p1.left+'" y1="'+p1.top +
+                   '" x2="'+p2.left+'" y2="'+p2.top+'"></line>';
+        $svg.html(cstart + line + cend);
       },
     },
   };
@@ -485,7 +486,7 @@ $(function(){
     if  (crop_bounds.start !==null && crop_bounds.end !== null) {
       var start = getMousePos(canvas, crop_bounds.start),
           end = getMousePos(canvas, crop_bounds.end);
-      crop_bounds.bound = [start.x, start.y, end.x-start.x, end.y-start.y];
+      crop_bounds.bound = [start.x, start.y, end.x, end.y];
     }
     crop_bounds.start = null;
   });
@@ -607,8 +608,54 @@ $(function(){
   });
 
   // TODO ------------ selected is atx_click_ui ------------
+  // canvas.addEventListener('click', function(evt){
+  //   var blk = Blockly.selected;
+  //   if (blk == null || blk.type != 'atx_click_ui') { return; }
+  // });
 
-  // TODO ------------ selected is atx_swipe -----------
+  // ------------ selected is atx_swipe -----------
+  var swipe_points = {start:null, end:null};
+  canvas.addEventListener('mousedown', function(evt){
+    var blk = Blockly.selected;
+    if (blk == null || blk.type != 'atx_swipe') { return; }
+    swipe_points.start = evt;
+    swipe_points.end = null;
+  });
+  canvas.addEventListener('mousemove', function(evt){
+    if (evt.movementX == 0 && evt.movementY == 0) { return; }
+    var blk = Blockly.selected;
+    if (blk == null || blk.type != 'atx_swipe' || swipe_points.start == null) { return; }
+    swipe_points.end = evt;
+    var spos = getMousePos(this, swipe_points.start),
+        epos = getMousePos(this, swipe_points.end);
+        p1 = getCanvasPos(spos.x, spos.y),
+        p2 = getCanvasPos(epos.x, epos.y);
+    // update blockly model
+    blk.setFieldValue(spos.x, 'SX');
+    blk.setFieldValue(spos.y, 'SY');
+    blk.setFieldValue(epos.x, 'EX');
+    blk.setFieldValue(epos.y, 'EY');
+    // update line
+    var $svg = $("#overlays-swipe").children('svg'),
+        cstart = '<circle cx="'+p1.left+'" cy="'+p1.top+'" fill="black" r="3"></circle>'
+        cend = '<circle cx="'+p2.left+'" cy="'+p2.top+'" fill="white" r="3"></circle>'
+        line = '<line stroke="black" stroke-width="2"' +
+               ' x1="'+p1.left+'" y1="'+p1.top +
+               '" x2="'+p2.left+'" y2="'+p2.top+'"></line>';
+    $svg.html(cstart + line + cend);
+  });
+  canvas.addEventListener('mouseup', function(evt){
+    var blk = Blockly.selected;
+    if (blk == null || blk.type != 'atx_swipe') { return; }
+    swipe_points.start = null;
+    swipe_points.end = null;
+  });
+  canvas.addEventListener('mouseout', function(evt){
+    var blk = Blockly.selected;
+    if (blk == null || blk.type != 'atx_swipe') { return; }
+    swipe_points.start = null;
+    swipe_points.end = null;
+  });
 
   //------------ canvas show rect/points for special block ------------//
   function getBlockOverlayData(blk) {
@@ -643,10 +690,15 @@ $(function(){
             ox = parseInt(pat_blk.getFieldValue('OX')),
             oy = parseInt(pat_blk.getFieldValue('OY'));
             return {x1: left, y1: top, x2: left+width, y2: top+height, c:{x:ox, y:oy}};
-      // return {x1, y1, x2, y2}
+      // TODO return {x1, y1, x2, y2}
       case 'atx_click_ui':
       // return {x1, y1, x2, y2}
       case 'atx_swipe':
+        var x1 = parseInt(blk.getFieldValue('SX')),
+            y1 = parseInt(blk.getFieldValue('SY')),
+            x2 = parseInt(blk.getFieldValue('EX')),
+            y2 = parseInt(blk.getFieldValue('EY'));
+            return {x1, y1, x2, y2};
       default:
         return null;
     }

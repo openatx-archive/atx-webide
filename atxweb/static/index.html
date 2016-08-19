@@ -85,7 +85,11 @@
             </h4>
             <div id="screen-wrapper" style="border: 1px solid red; position: relative;">
               <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
-              <div id="screen-overlays" class="full"></div>
+              <div id="screen-overlays" class="full">
+                <div id="overlays-swipe">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
+                </div>
+              </div>
               <div id="screen-crop" class="image-crop"></div>
               <canvas id="canvas" width="40" height="10">
                 Browser not support canvas
@@ -99,7 +103,6 @@
             </h4>
             <pre class='console'></pre>
           </div>
-
         </div>
       </div>
     </div>
@@ -107,7 +110,10 @@
     <xml id="toolbox" style="display: none">
       <category name="ATX" colour="160">
         <block type="atx_connect"></block>
+        <block type="atx_start_app"></block>
+        <block type="atx_stop_app"></block>
         <block type="atx_click"></block>
+        <block type="atx_swipe"></block>
         <block type="atx_screenshot">
           <value name="FILENAME">
             <block type="text">
@@ -183,10 +189,6 @@
     <script src="{{static_url('js/jquery.fancybox.pack.js')}}"></script>
     <script src="{{static_url('js/notify.js')}}"></script>
     <script src="{{static_url('js/bootstrap-3.3.5.min.js')}}"></script>
-    <!-- <script src="//127.0.0.1:8000/blockly_compressed.js"></script>
-    <script src="//127.0.0.1:8000/blocks_compressed.js"></script>
-    <script src="//127.0.0.1:8000/msg/js/en.js"></script>
-    <script src="//127.0.0.1:8000/python_compressed.js"></script> -->
     <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
     <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>
     <script src="{{static_url('blockly/msg/js/en.js')}}"></script>
