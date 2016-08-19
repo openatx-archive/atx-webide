@@ -278,12 +278,12 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
         web_port = get_valid_port()
 
     global atx_settings
-    atx_settings['host'] = host
-    atx_settings['port'] = port
     atx_settings['platform'] = platform
     if platform == 'ios':
         atx_settings['device_url'] = serial
     else:
+        atx_settings['host'] = host
+        atx_settings['port'] = port
         atx_settings['serialno'] = serial
 
     if open_browser:
@@ -295,5 +295,11 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
     log.info("Listening port on 127.0.0.1:{}".format(web_port))
     tornado.ioloop.IOLoop.instance().start()
 
-if __name__ == "__main__":
-    run()
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        serial = sys.argv[1]
+        if serial.startswith('http://'):
+            platform = 'ios'
+        else:
+            platform = 'android'
+    run(serial=serial, platform=platform)
