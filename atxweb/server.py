@@ -302,4 +302,6 @@ if __name__ == '__main__':
             platform = 'ios'
         else:
             platform = 'android'
-    run(serial=serial, platform=platform)
+        run(serial=serial, platform=platform)
+    else:
+        run()

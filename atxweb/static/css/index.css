@@ -34,6 +34,10 @@ pre.console {
   pointer-events: none;
 }
 
+#screen-crop-rect {
+  border: 2px solid yellow;
+}
+
 .clearfix:after {
   content: "";
   display: table;

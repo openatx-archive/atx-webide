@@ -6,6 +6,7 @@ var vm = new Vue({
   data: {
     landscape: false,
     latest_screen: null,
+    screen_scale: null,
   },
   methods: {
     toggleLandscape: function() {
@@ -197,6 +198,8 @@ $(function(){
     $.get('/workspace')
       .success(function(res){
         var xml = Blockly.Xml.textToDom(res.xml_text);
+        // clear up before add
+        workspace.clear();
         Blockly.Xml.domToWorkspace(workspace, xml);
         updateGenerate(workspace)
       })
@@ -299,7 +302,8 @@ $(function(){
   function resizeCanvas(canvas){
     var width = $('#screen-wrapper').width();
     canvas.setAttribute('width', width);
-    loadCanvasImage(canvas, M.screenURL);
+    canvas.setAttribute('height', width*(M.screenRatio || 1.78));
+    // loadCanvasImage(canvas, M.screenURL);
   }
 
   function loadCanvasImage(canvas, url, callback){
@@ -308,8 +312,9 @@ $(function(){
     url = url || M.screenURL;
     imageObj.crossOrigin="anonymous";
     imageObj.onload = function(){
-      M.screenRatio = canvas.width/imageObj.width; // global
-      var height = Math.floor(M.screenRatio*imageObj.height);
+      M.screenRatio = imageObj.height / imageObj.width;
+      M.screenScale = canvas.width/imageObj.width; // global
+      var height = Math.floor(M.screenScale*imageObj.height);
       canvas.setAttribute('height', height);
       context.drawImage(imageObj, 0, 0, canvas.width, canvas.height);
       var $wrapper = $(canvas).parent('div')
@@ -353,8 +358,8 @@ $(function(){
   function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
-      x: Math.floor((evt.clientX - rect.left) / M.screenRatio),
-      y: Math.floor((evt.clientY - rect.top) / M.screenRatio),
+      x: Math.floor((evt.clientX - rect.left) / M.screenScale),
+      y: Math.floor((evt.clientY - rect.top) / M.screenScale),
     };
   }
 
@@ -374,8 +379,8 @@ $(function(){
 
   //------------ canvas overlay parts ------------//
   function getCanvasPos(x, y) {
-      var left = M.screenRatio * x,
-          top  = M.screenRatio * y;
+      var left = M.screenScale * x,
+          top  = M.screenScale * y;
       return {left, top};
   }
 
@@ -435,14 +440,36 @@ $(function(){
   //------------ canvas do different things for different block ------------//
 
   // -------- selected is null, used for save screen crop -------
-  var crop_bounds = {start: null, end: null, bound:null};
+  var crop_bounds = {start: null, end: null, bound:null},
+      crop_rect_bounds = {start:null, end:null, bound:null},
+      draw_rect = false;
+
+  // Alt: 18, Ctrl: 17, Shift: 16
+  $('body').on('keydown', function(evt){
+    if (true || evt.keyCode != 18) {return;}
+    draw_rect = true;
+    crop_bounds.start = crop_bounds.end = crop_bounds.bound = null;
+    // $("#screen-crop").css({'left':'0px', 'top':'0px', 'width':'0px', 'height':'0px'});
+  });
+  $('body').on('keyup', function(evt){
+    if (evt.keyCode != 18) {return;}
+    draw_rect = false;
+    crop_rect_bounds.start = crop_rect_bounds.end = crop_rect_bounds.bound = null;
+    // $("#screen-crop-rect").css({'left':'0px', 'top':'0px', 'width':'0px', 'height':'0px'});
+  });
+
   canvas.addEventListener('mousedown', function(evt){
     var blk = Blockly.selected;
     if (blk !== null) {
       return;
     }
-    crop_bounds.start = evt;
-    crop_bounds.end = null;
+    if (draw_rect) {
+      crop_rect_bounds.start = evt;
+      crop_rect_bounds.end = null;
+    } else {
+      crop_bounds.start = evt;
+      crop_bounds.end = null;
+    }
   });
   canvas.addEventListener('mousemove', function(evt){
     // ignore fake move
@@ -450,17 +477,25 @@ $(function(){
       return;
     }
     var blk = Blockly.selected;
-    if (blk !== null || crop_bounds.start == null) {
+    if (blk !== null || (crop_bounds.start == null && crop_rect_bounds.start == null)) {
       return;
     }
-    crop_bounds.end = evt;
-    // update crop-rect position
     var rect = canvas.getBoundingClientRect(),
-        $rect = $("#screen-crop"),
-        left = crop_bounds.start.pageX - rect.left,
-        top = crop_bounds.start.pageY - rect.top,
-        width = Math.max(crop_bounds.end.pageX - crop_bounds.start.pageX, 10),
-        height = Math.max(crop_bounds.end.pageY - crop_bounds.start.pageY, 10);
+        $rect, bounds;
+    if (draw_rect) {
+      crop_rect_bounds.end = evt;
+      bounds = crop_rect_bounds;
+      $rect = $("#screen-crop-rect");
+    } else {
+      crop_bounds.end = evt;
+      bounds = crop_bounds;
+      $rect = $("#screen-crop");
+    }
+    // update rect position
+    var left = bounds.start.pageX - rect.left,
+        top = bounds.start.pageY - rect.top,
+        width = Math.max(bounds.end.pageX - bounds.start.pageX, 10),
+        height = Math.max(bounds.end.pageY - bounds.start.pageY, 10);
     $rect.css('left', left+'px')
          .css('top', top+'px')
          .css('width', width+'px')
@@ -477,6 +512,7 @@ $(function(){
       crop_bounds.bound = [start.x, start.y, end.x, end.y];
     }
     crop_bounds.start = null;
+    crop_rect_bounds.start = null;
   });
   canvas.addEventListener('mouseout', function(evt){
     var blk = Blockly.selected;
@@ -489,6 +525,7 @@ $(function(){
       crop_bounds.bound = [start.x, start.y, end.x, end.y];
     }
     crop_bounds.start = null;
+    crop_rect_bounds.start = null;
   });
 
   // -------- selected is atx_click ----------
