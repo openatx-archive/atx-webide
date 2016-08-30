@@ -562,6 +562,7 @@ $(function(){
         top = bounds.start.pageY - rect.top,
         width = Math.max(bounds.end.pageX - bounds.start.pageX, 10),
         height = Math.max(bounds.end.pageY - bounds.start.pageY, 10);
+    $rect.show();
     $rect.css('left', left+'px')
          .css('top', top+'px')
          .css('width', width+'px')

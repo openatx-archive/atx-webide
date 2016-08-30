@@ -124,17 +124,20 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         try:
             # python code always UTF-8
             code = code.encode('utf-8')
-            # hot patch
-            code = code.replace('atx.click_image', 'd.click_image')
+
+            if device is None:
+                raise RuntimeError('No Device!')
 
             exec code in {
+                'd': device,
                 'highlight_block': self._highlight_block,
                 '__name__': '__main__',
                 '__file__': filename}
         except RuntimeError as e:
-            if str(e) != 'stopped':
-                raise
-            print 'Program stopped'
+            if str(e) == 'stopped':
+                print 'Program stopped'
+                return
+            self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
         except Exception as e:
             self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
         finally:
