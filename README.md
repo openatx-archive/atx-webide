@@ -38,9 +38,11 @@ optional arguments:
 ```
 
 ## Todo
-- [ ] track history screens.
-- [ ] select device from web
+- [x] track history screens.
+- [x] select device from web
 - [ ] control device from web
+- [ ] add atx_start_app & atx_stop_app
+- [ ] add resize handle, fix #1
 
 ## Refs
 1. [ATX (AutomatorX)](https://github.com/codeskyblue/AutomatorX)
