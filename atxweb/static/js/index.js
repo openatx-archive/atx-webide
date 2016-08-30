@@ -222,6 +222,10 @@ $(function(){
   }
 
   function restoreWorkspace() {
+    // do nothing if not visible.
+    if ($('#blocklyDiv').css('display') == 'none') {
+      return;
+    }
     $.get('/workspace')
       .success(function(res){
         var xml = Blockly.Xml.textToDom(res.xml_text);
