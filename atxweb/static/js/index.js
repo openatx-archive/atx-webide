@@ -11,6 +11,7 @@ var vm = new Vue({
     android_serials: [],
     device: {
       platform: 'android',
+      ios_url: '',
       serial: '',
     },
   },
@@ -19,16 +20,19 @@ var vm = new Vue({
       this.landscape = !this.landscape;
     },
     connectDevice: function(){
-      console.log("connecting", this.device.platform, this.device.serial);
+      var serial = this.device.platform == 'ios' ? this.device.ios_url : this.device.serial;
+      console.log("connecting", this.device.platform, serial);
       $.ajax({
         url: '/device',
         method: 'POST',
         dataType: 'json',
         data: {
-          serial: this.device.serial,
+          serial: serial,
         },
         success: function(data){
           $.notify('连接成功, 刷新中..', {position: 'top center', className: 'success'});
+          // TODO: update device info
+          console.log(123, data);
           $('#btn-refresh-screen').click();
           $('#device-chooser').hide();
         },
@@ -37,6 +41,9 @@ var vm = new Vue({
           $('#device-chooser').show();
         }
       });
+    },
+    cancelConnectDevice: function(){
+      $('#device-chooser').hide();
     },
   },
 })
@@ -347,7 +354,7 @@ $(function(){
     });
   }
 
-  $('btn-change-device').click(function(){
+  $('#btn-change-device').click(function(){
     getDeviceChoices();
   });
 

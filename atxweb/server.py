@@ -241,37 +241,41 @@ class DeviceHandler(tornado.web.RequestHandler):
         '''get device list'''
         global device
         d = AdbClient().devices().keys()
+        print 'android device list:', d
         self.write({'android':d, 'ios':[], 'serial':device and device.serial})
 
     def post(self):
         '''connect device'''
         global device, atx_settings
-        serial = self.get_argument('serial')
+        serial = self.get_argument('serial').strip()
 
         ## check if device is alive, should be in drivers?
         if device is not None:
             if serial == device.serial:
                 if device.serial.startswith('http://'):
-                    self.write({'status': 'ok', 'serial': serial})
+                    self.write({'status': 'ok'})
                     return
                 elif AdbClient().devices().get(serial) == 'device':
-                    self.write({'status': 'ok', 'serial': serial})
+                    self.write({'status': 'ok'})
                     return
 
         ## wrapping args, should be in drivers? identifier?
         settings = {}
         if serial.startswith('http://'):
-            settings['platform'] = 'ios'
+            settings['platform'] = platform = 'ios'
             settings['device_url'] = serial
         else:
-            settings['platform'] = 'android'
+            settings['platform'] = platform = 'android'
             settings['serialno'] = serial
 
         ## (re)connect
         device = atx.connect(**settings)
-        if getattr(device, 'serial', None) is None:
+        if platform == 'ios':
+            info = device.status()
             setattr(device, 'serial', serial)
-        self.write({'status': 'ok', 'serial': serial})
+        else:
+            info = device.info
+        self.write({'status': 'ok', 'info': info})
 
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
