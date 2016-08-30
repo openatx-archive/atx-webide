@@ -1,17 +1,43 @@
 /* Javascript */
 var M = {};
 
+Vue.config.delimiters = ['${', '}'];
 var vm = new Vue({
   el: '#main-content',
   data: {
     landscape: false,
     latest_screen: null,
     screen_scale: null,
+    android_serials: [],
+    device: {
+      platform: 'android',
+      serial: '',
+    },
   },
   methods: {
     toggleLandscape: function() {
       this.landscape = !this.landscape;
-    }
+    },
+    connectDevice: function(){
+      console.log("connecting", this.device.platform, this.device.serial);
+      $.ajax({
+        url: '/device',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          serial: this.device.serial,
+        },
+        success: function(data){
+          $.notify('连接成功, 刷新中..', {position: 'top center', className: 'success'});
+          $('#btn-refresh-screen').click();
+          $('#device-chooser').hide();
+        },
+        error: function(err) {
+          $.notify('连接失败', {position: 'top center', className: 'error'});
+          $('#device-chooser').show();
+        }
+      });
+    },
   },
 })
 
@@ -59,7 +85,8 @@ $(function(){
       ws.send(JSON.stringify({command: "refresh"}))
       $.notify(
         '与后台通信连接成功!!!',
-        {position: 'top center', className: 'success'})
+        {position: 'top center', className: 'success'});
+      getDeviceChoices();
     };
     ws.onmessage = function(evt){
       try {
@@ -286,11 +313,39 @@ $(function(){
     loadCanvasImage(M.canvas, M.screenURL, function(err){
       if (err){
         $this.notify(err, 'error')
+        getDeviceChoices();
       }
       $this.prop('disabled', false);
       sendWebsocket({command: 'refresh'})
     })
   })
+
+  function getDeviceChoices(){
+    $.ajax({
+      url: '/device',
+      method: 'GET',
+      dataType: 'json',
+      data: {
+        platform: vm.device.platform,
+      },
+      success: function(data){
+        // clean old devices
+        vm.android_serials.splice(0, vm.android_serials.length);
+        for (var i = 0, s; i < data.android.length; i++) {
+          s = data.android[i];
+          vm.android_serials.push(s);
+        }
+        $('#device-chooser').show();
+      },
+      error: function(err) {
+        console.log(222, err);
+      }
+    });
+  }
+
+  $('btn-change-device').click(function(){
+    getDeviceChoices();
+  });
 
 
   $('.fancybox').fancybox()
@@ -445,18 +500,18 @@ $(function(){
       draw_rect = false;
 
   // Alt: 18, Ctrl: 17, Shift: 16
-  $('body').on('keydown', function(evt){
-    if (true || evt.keyCode != 18) {return;}
-    draw_rect = true;
-    crop_bounds.start = crop_bounds.end = crop_bounds.bound = null;
-    // $("#screen-crop").css({'left':'0px', 'top':'0px', 'width':'0px', 'height':'0px'});
-  });
-  $('body').on('keyup', function(evt){
-    if (evt.keyCode != 18) {return;}
-    draw_rect = false;
-    crop_rect_bounds.start = crop_rect_bounds.end = crop_rect_bounds.bound = null;
-    // $("#screen-crop-rect").css({'left':'0px', 'top':'0px', 'width':'0px', 'height':'0px'});
-  });
+  // $('body').on('keydown', function(evt){
+  //   if (true || evt.keyCode != 18) {return;}
+  //   draw_rect = true;
+  //   crop_bounds.start = crop_bounds.end = crop_bounds.bound = null;
+  //   // $("#screen-crop").css({'left':'0px', 'top':'0px', 'width':'0px', 'height':'0px'});
+  // });
+  // $('body').on('keyup', function(evt){
+  //   if (evt.keyCode != 18) {return;}
+  //   draw_rect = false;
+  //   crop_rect_bounds.start = crop_rect_bounds.end = crop_rect_bounds.bound = null;
+  //   // $("#screen-crop-rect").css({'left':'0px', 'top':'0px', 'width':'0px', 'height':'0px'});
+  // });
 
   canvas.addEventListener('mousedown', function(evt){
     var blk = Blockly.selected;

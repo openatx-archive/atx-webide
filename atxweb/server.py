@@ -22,6 +22,7 @@ import atx
 from atx import logutils
 from atx import imutils
 from atx import base
+from atx.adbkit.client import Client as AdbClient
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -207,11 +208,13 @@ class WorkspaceHandler(tornado.web.RequestHandler):
 class ScreenshotHandler(tornado.web.RequestHandler):
 
     def get(self):
-        d = atx.connect(**atx_settings)
+        global device
+        if device is None:
+            raise RuntimeError('No Device!')
         v = self.get_argument('v')
         global latest_screen
         latest_screen = 'screenshots/screen_%s.png' % v
-        d.screenshot(latest_screen)
+        device.screenshot(latest_screen)
 
         self.set_header('Content-Type', 'image/png')
         with open(latest_screen, 'rb') as f:
@@ -232,6 +235,43 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         cv2.imwrite(filename, image)
         self.write({'status': 'ok'})
 
+class DeviceHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        '''get device list'''
+        global device
+        d = AdbClient().devices().keys()
+        self.write({'android':d, 'ios':[], 'serial':device and device.serial})
+
+    def post(self):
+        '''connect device'''
+        global device, atx_settings
+        serial = self.get_argument('serial')
+
+        ## check if device is alive, should be in drivers?
+        if device is not None:
+            if serial == device.serial:
+                if device.serial.startswith('http://'):
+                    self.write({'status': 'ok', 'serial': serial})
+                    return
+                elif AdbClient().devices().get(serial) == 'device':
+                    self.write({'status': 'ok', 'serial': serial})
+                    return
+
+        ## wrapping args, should be in drivers? identifier?
+        settings = {}
+        if serial.startswith('http://'):
+            settings['platform'] = 'ios'
+            settings['device_url'] = serial
+        else:
+            settings['platform'] = 'android'
+            settings['serialno'] = serial
+
+        ## (re)connect
+        device = atx.connect(**settings)
+        if getattr(device, 'serial', None) is None:
+            setattr(device, 'serial', serial)
+        self.write({'status': 'ok', 'serial': serial})
 
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
@@ -247,6 +287,7 @@ def make_app(settings={}):
         (r"/workspace", WorkspaceHandler), # save and write workspace
         (r"/images/screenshot", ScreenshotHandler),
         (r'/api/images', ImageHandler),
+        (r'/device', DeviceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
     ], **settings)
     return application

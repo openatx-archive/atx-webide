@@ -81,10 +81,34 @@
             <h4>Screen
               <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存选区</button>
               <button type="button" id="btn-refresh-screen" class="btn btn-default btn-xs">刷新</button>
+              <button type="button" id="btn-change-device" class="btn btn-default btn-xs">切换设备</button>
               <button type="button" v-on:click="toggleLandscape" class="btn btn-default btn-xs">宽屏切换</button>
             </h4>
             <div id="screen-wrapper" style="border: 1px solid red; position: relative;">
-              <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
+              <div id="device-chooser" style="display:none">
+                <p>连接设备</p>
+                <form>
+                  <div class="center-block">
+                    <label class="radio-inline">
+                      <input type="radio" v-model="device.platform" name="platform" value="android" checked>Android
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" v-model="device.platform" name="platform" value="ios">iOS
+                    </label>
+                  </div>
+                  <div v-show='device.platform=="ios"'>
+                    <p>请输入连接地址</p>
+                    <input type="text" v-model="device.serial" placeholder="http://..." class="form-control">
+                  </div>
+                  <div v-else>
+                    <p>请选择序列号</p>
+                    <select v-model="device.serial" class="form-control">
+                      <option v-for="s in android_serials">${s}</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-primary" @click="connectDevice">Connect</button>
+                </form>
+              </div>
               <div id="screen-overlays" class="full">
                 <div id="overlays-swipe">
                   <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
