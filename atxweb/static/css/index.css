@@ -98,4 +98,10 @@ pre.console {
 
 #resize-handle {
   position: absolute;
+  width: 10px;
+  height: 100px;
+}
+
+#resize-handle:hover {
+  cursor: col-resize;
 }

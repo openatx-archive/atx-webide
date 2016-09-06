@@ -852,4 +852,16 @@ $(function(){
   workspace.addChangeListener(onDeleteBlock);
   workspace.addChangeListener(onUIFieldChange);
   workspace.addChangeListener(onBlockConnectionChange);
+
+  /*--------------- resize handle ----------------*/
+  function setupResizeHandle(){
+    $('#resize-handle').on('drag', function(evt){
+      var x = evt.originalEvent.pageX;
+      if (x <= 0) { return; }
+      var p = 1 - (evt.originalEvent.pageX - 30)/(vm.layout.width-60);
+      vm.layout.right_portion = Math.min(55, Math.max(parseInt(p*100), 25));
+      vm.layout.width = document.documentElement.clientWidth;
+    });
+  }
+  setupResizeHandle();
 })

@@ -33,7 +33,7 @@
             <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
             <li v-if="blockly.running" class="pull-right" @click="stopBlockly"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
             <li v-else class="pull-right" @click="runBlockly" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
-            <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-save"></span>保存</a></li>
+            <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
           </ul>
           <div class="tab-content" >
             <div id="blocklyDiv" v-bind:class="{'active': tab=='blocklyDiv'}" class="tab-pane"></div>
@@ -112,7 +112,9 @@
           </div>
         </div> <!-- #right-panel -->
 
-        <div id="resize-handle"></div>
+        <div id="resize-handle" v-bind:style="{'left':(layout.width-60)*(1-layout.right_portion/100)+15-5+'px','top':layout.height/3+'px'}">
+          <img src="{{static_url('arrows_drag_horiz.png')}}" style="width:100%;height:100%;">
+        </div>
       </div> <!-- col-md-12 -->
 
 
