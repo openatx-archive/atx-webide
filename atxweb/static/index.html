@@ -1,139 +1,122 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" />
     <title>Atx Web IDE</title>
-
     <!-- Bootstrap -->
     <link rel="stylesheet" href="{{static_url('css/bootstrap-3.3.5.min.css')}}">
-    <link rel="stylesheet" href="{{static_url('css/jquery.fancybox.min.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/prism.css')}}">
     <link rel="stylesheet" href="{{static_url('css/index.css')}}">
   </head>
+
   <body>
     <nav class="navbar navbar-default">
-      <div class="container-fluid"> <!-- container class -->
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/">ATX IDE</a>
-        </div>
-        <div id="navbar" class="collapse navbar-collapse">
+      <div class="container-fluid">
+        <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="/">Home</a></li>
           </ul>
-        </div><!--/.nav-collapse -->
+        </div>
       </div>
     </nav>
 
-    <div class="container-fluid" id='main-content'>
+    <div id="main-content" class="container-fluid">
       <div class="col-md-12">
-        <div id="left-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-9'">
-          <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active">
-              <a href="#blocklyDiv" aria-controls="blocklyDiv" role="tab" data-toggle="tab">Blockly</a>
-            </li>
-            <li role="presentation">
-              <a href="#pythonDiv" aria-controls="pythonDiv" role="tab" data-toggle="tab">Python</a>
-            </li>
-            <li role="presentation">
-              <a href="#imagesDiv" aria-controls="imagesDiv" role="tab" data-toggle="tab">Images</a>
-            </li>
-            <li class="pull-right">
-              <a href="#play">
-                <span class="glyphicon glyphicon-play"></span>
-                运行
-              </a>
-            </li>
-            <li class="pull-right">
-              <a href="#save">
-                <span class="glyphicon glyphicon-floppy-saved"></span>
-                保存
-              </a>
-            </li>
+        <!-- left panel -->
+        <div id="left-panel" v-bind:style="{'width':(100-layout.right_portion)+'%'}">
+          <ul class="nav nav-tabs">
+            <li v-bind:class="{'active': tab=='blocklyDiv'}"><a @click="switchTab('blocklyDiv')">Blockly</a></li>
+            <li v-bind:class="{'active': tab=='pythonDiv'}"><a @click="switchTab('pythonDiv')">Python</a></li>
+            <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
+            <li v-if="blockly.running" class="pull-right" @click="stopBlockly"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
+            <li v-else class="pull-right" @click="runBlockly" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
+            <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-save"></span>保存</a></li>
           </ul>
+          <div class="tab-content" >
+            <div id="blocklyDiv" v-bind:class="{'active': tab=='blocklyDiv'}" class="tab-pane"></div>
+            <div id="pythonDiv" v-bind:class="{'active': tab=='pythonDiv'}" class="tab-pane">
+              <pre class="line-numbers language-python">
+                <code id="python-code"></code>
+              </pre>
+            </div>
+            <div id="imagesDiv" v-bind:class="{'active': tab=='imagesDiv'}" class="tab-pane">
+              <ul class="clearfix">
+                <li v-for="img in images">
+                  <div><img src="${img.path}"><p>${img.name}</p></div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div v-show="layout.right_portion<=50">
+            <h4>Console
+              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+            </h4>
+            <pre class='console'></pre>
+          </div>
+        </div> <!-- #left-panel -->
 
-          <div class="tab-content">
-            <div id="blocklyDiv" role="tabpanel" class="tab-pane active">
-            </div>
-            <div id="pythonDiv" role="tabpanel" class="tab-pane">
-              <pre class='code-python'></pre>
-            </div>
-            <div id="imagesDiv" role="tabpanel" class="tab-pane">
-              <ul class="clearfix"></ul>
-            </div>
-          </div>
-          <div v-show="!landscape">
-            <h4>Console
-              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
-            </h4>
-            <pre class='console'></pre>
-          </div>
-        </div>
-        <div id="right-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-3'">
-          <div>
-            <h4>Screen
-              <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存选区</button>
-              <button type="button" id="btn-refresh-screen" class="btn btn-default btn-xs">刷新</button>
-              <button type="button" id="btn-change-device" class="btn btn-default btn-xs">切换设备</button>
-              <button type="button" v-on:click="toggleLandscape" class="btn btn-default btn-xs">宽屏切换</button>
-            </h4>
-            <div id="screen-wrapper" style="border: 1px solid red; position: relative;">
-              <div id="device-chooser" style="display:none">
-                <p>连接设备</p>
-                <form>
-                  <div class="center-block">
-                    <label class="radio-inline">
-                      <input type="radio" v-model="device.platform" name="platform" value="android" checked>Android
-                    </label>
-                    <label class="radio-inline">
-                      <input type="radio" v-model="device.platform" name="platform" value="ios">iOS
-                    </label>
-                  </div>
-                  <div v-show='device.platform=="ios"'>
-                    <p>请输入连接地址</p>
-                    <input type="text" v-model="device.ios_url" placeholder="http://..." class="form-control">
-                  </div>
-                  <div v-else>
-                    <p>请选择序列号</p>
-                    <select v-model="device.serial" class="form-control">
-                      <option v-for="s in android_serials">${s}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <button type="button" class="btn btn-primary" @click="connectDevice">连 接</button>
-                    <button type="button" class="btn btn-primary" @click="cancelConnectDevice">取 消</button>
-                  </div>
-                </form>
-              </div>
-              <div id="screen-overlays" class="full">
-                <div id="overlays-swipe">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
+        <!-- right-panel -->
+        <div id="right-panel" v-bind:style="{'width':layout.right_portion+'%'}">
+          <h4>Screen
+            <button type="button" class="btn btn-default btn-xs" @click="saveScreenCrop">保存选区</button>
+            <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing">刷新</button>
+            <button type="button" class="btn btn-default btn-xs" @click="openChooseDevice">切换设备</button>
+          </h4>
+          <div id="screen-wrapper" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}" style="position: relative;">
+            <div id="device-chooser" v-bind:style="{'display': choosing ? 'block' : 'none'}">
+              <p>连接设备</p>
+              <form>
+                <div class="center-block">
+                  <label class="radio-inline">
+                    <input type="radio" v-model="device.platform" name="platform" value="android" checked>Android
+                  </label>
+                  <label class="radio-inline">
+                    <input type="radio" v-model="device.platform" name="platform" value="ios">iOS
+                  </label>
                 </div>
+                <div v-show='device.platform=="ios"'>
+                  <p>请输入连接地址</p>
+                  <input type="text" v-model="ios_url" placeholder="http://..." class="form-control">
+                </div>
+                <div v-else>
+                  <p>请选择序列号</p>
+                  <select v-model="android_serial" class="form-control">
+                    <option v-for="s in android_serial_choices">${s}</option>
+                  </select>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-primary" @click="connectDevice">连 接</button>
+                  <button type="button" class="btn btn-primary" @click="cancelConnectDevice">取 消</button>
+                </div>
+              </form>
+            </div> <!-- #device-chooser -->
+            <div id="screen-overlays" class="full">
+              <div id="overlays-swipe" class="full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
               </div>
-              <div id="screen-crop" class="image-crop"></div>
-              <div id="screen-crop-rect" class="image-crop"></div>
-              <canvas id="canvas" width="40" height="10">
-                Browser not support canvas
-              </canvas>
-            </div>
-            <div class='status-bar'>Status: <span></span></div>
-          </div>
-          <div v-show="landscape">
+            </div> <!-- #screen-overlays -->
+            <div id="screen-crop" class="image-crop"></div>
+            <div id="screen-crop-rect" class="image-crop"></div>
+            <canvas id="canvas">
+              Browser not support canvas
+            </canvas>
+          </div> <!-- #screen-wrapper -->
+          <div v-show="layout.right_portion>50">
             <h4>Console
               <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>
-        </div>
-      </div>
-    </div>
+        </div> <!-- #right-panel -->
+
+        <div id="resize-handle"></div>
+      </div> <!-- col-md-12 -->
+
+
+    </div> <!-- #main-content -->
 
     <xml id="toolbox" style="display: none">
       <category name="ATX" colour="160">
@@ -205,29 +188,20 @@
       </category>
     </xml>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <!-- jquery -->
     <script src="{{static_url('js/jquery-1.11.3.min.js')}}"></script>
-    <script src="{{static_url('js/jquery.mousewheel.min.js')}}"></script>
-    <script src="{{static_url('js/jquery.fancybox.pack.js')}}"></script>
     <script src="{{static_url('js/notify.js')}}"></script>
-    <script src="{{static_url('js/bootstrap-3.3.5.min.js')}}"></script>
+    <!-- hightlight -->
+    <script src="{{static_url('js/prism.js')}}" data-manual></script>
+    <!-- blockly -->
     <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
     <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>
     <script src="{{static_url('blockly/msg/js/en.js')}}"></script>
     <script src="{{static_url('blockly/python_compressed.js')}}"></script>
-
+    <!-- vue & main -->
     <script src="{{static_url('js/vue.min.js')}}"></script>
     <script src="{{static_url('js/index.js')}}"></script>
 
-    <!-- Google Analytics Code -->
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-    ga('create', 'UA-55124209-6', 'auto');
-    ga('send', 'pageview');
-    </script>
   </body>
+
 </html>

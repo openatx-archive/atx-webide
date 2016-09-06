@@ -1,27 +1,149 @@
-/* Javascript */
-var M = {};
+/* utils functions */
+function notify(message, className, position, element, autoHideDelay){
+  className = className || 'info';
+  position = position || 'top center';
+  autoHideDelay = autoHideDelay || 1500;
+  $.notify(message, {className, position, autoHideDelay});
+}
 
+/* Vue controls the layout */
 Vue.config.delimiters = ['${', '}'];
 var vm = new Vue({
   el: '#main-content',
   data: {
-    landscape: false,
-    latest_screen: null,
-    screen_scale: null,
-    android_serials: [],
+    tab: 'blocklyDiv',
+    // choose device
+    choosing: false,
+    android_serial_choices: [],
+    android_serial: '',
+    ios_url: '',
+    // device status
     device: {
       platform: 'android',
-      ios_url: '',
       serial: '',
+      latest_screen: '',
+    },
+    // layout controls
+    layout: {
+      width: 1, //document.documentElement.clientWidth,
+      height: 1, //document.documentElement.clientHeight,
+      right_portion: 30, // max: 55, min: 25
+      screen_ratio: 1.5, // screen height/width
+      screen_scale: 0.4, // canvas width / screen width
+    },
+    // screen
+    screen: null,
+    refreshing: true, // should set to false after refreshScreen
+    // blockly stuff
+    blockly: {
+      dirty: false, // has there any changes been made
+      running: false,
+      saving: false,
+      xml: '',
+      pythonText: '',
+      pythonDebugText: '',
+    },
+    images: [],
+    // screen overlays
+    overlays: {
+      selected: null,
+      crop_bounds: {bound:null}, // null
+      click_point: {}, // atx_click
+      rect_bounds: {}, // atx_click_image
+      swipe_points: {}, // atx_swipe
+    },
+  },
+  computed: {
+    canvas_width: function() {
+      var margin = 30; // right 15 + left 15
+      return (this.layout.width-2*margin) * this.layout.right_portion/100.0 - margin;
+    },
+    canvas_height: function() {
+      canvas.width = this.canvas_width;
+      canvas.height = this.canvas_width * this.layout.screen_ratio;
+      if (this.screen) {
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(this.screen, 0, 0, canvas.width, canvas.height);
+        this.layout.screen_scale = this.canvas_width/this.screen.width;
+      }
+      return canvas.height;
     },
   },
   methods: {
-    toggleLandscape: function() {
-      this.landscape = !this.landscape;
+    switchTab: function(which) {
+      if (which == this.tab) { return; }
+      if (this.tab == 'blocklyDiv' && this.blockly.dirty) {this.saveWorkspace();}
+      this.tab = which;
+    },
+    generateCode: function(){
+      this.blockly.xml = Blockly.Xml.workspaceToDom(workspace);
+      this.blockly.xmlText = Blockly.Xml.domToPrettyText(this.blockly.xml),
+      Blockly.Python.STATEMENT_PREFIX = '';
+      this.blockly.pythonText = Blockly.Python.workspaceToCode(workspace);
+      Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
+      this.blockly.pythonDebugText = Blockly.Python.workspaceToCode(workspace);
+      // highlight python code block
+      this.$nextTick(function(){
+        $("#python-code").text(this.blockly.pythonText);
+        Prism.highlightAll();
+      });
+    },
+    saveWorkspace: function(){
+      if (!workspace) {return;}
+      this.generateCode();
+      var self = this;
+      // save
+      $.ajax({
+        url: '/workspace',
+        method: 'POST',
+        data: {'xml_text': this.blockly.xmlText, 'python_text': this.blockly.pythonText},
+        success: function(data){
+          notify('保存成功', 'success');
+          self.blockly.dirty = false;
+        },
+        error: function(e){
+          console.log(e);
+          notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
+        },
+      });
+    },
+    runBlockly: function(){
+      this.blockly.running = true;
+      workspace.traceOn(true); // enable step run
+      ws.send(JSON.stringify({command: "run", code:this.blockly.pythonDebugText}));
+    },
+    stopBlockly: function(){
+      console.log('stop');
+      ws.send(JSON.stringify({command: "stop", code:this.blockly.pythonDebugText}));
+    },
+    getDeviceChoices: function(){
+      var self = this;
+      $.ajax({
+        url: '/device',
+        method: 'GET',
+        dataType: 'json',
+        data: {
+          platform: this.device.platform,
+        },
+        success: function(data){
+          // clean old devices
+          self.android_serial_choices.splice(0, self.android_serial_choices.length);
+          for (var i = 0, s; i < data.android.length; i++) {
+            s = data.android[i];
+            self.android_serial_choices.push(s);
+          }
+          self.choosing = true;
+        },
+        error: function(err) {
+          notify('获取设备列表失败', 'error');
+          console.log(222, err);
+        }
+      });
     },
     connectDevice: function(){
-      var serial = this.device.platform == 'ios' ? this.device.ios_url : this.device.serial;
+      var serial = this.device.platform == 'ios' ? this.ios_url : this.android_serial;
       console.log("connecting", this.device.platform, serial);
+      var self = this;
       $.ajax({
         url: '/device',
         method: 'POST',
@@ -30,108 +152,162 @@ var vm = new Vue({
           serial: serial,
         },
         success: function(data){
-          $.notify('连接成功, 刷新中..', {position: 'top center', className: 'success'});
-          // TODO: update device info
-          console.log(123, data);
-          $('#btn-refresh-screen').click();
-          $('#device-chooser').hide();
+          notify('连接成功, 刷新中..', 'success');
+          self.choosing = false;
+          self.refreshScreen();
         },
         error: function(err) {
-          $.notify('连接失败', {position: 'top center', className: 'error'});
-          $('#device-chooser').show();
+          notify('连接失败', 'error');
+          self.choosing = false;
         }
       });
     },
     cancelConnectDevice: function(){
-      $('#device-chooser').hide();
+      this.choosing = false;
+    },
+    openChooseDevice: function(){
+      this.getDeviceChoices();
+    },
+    refreshScreen: function() {
+      var url = '/images/screenshot?v=t' + new Date().getTime();
+      this.loadScreen(url,
+        function(){ notify('Refresh Done.', 'success');},
+        function(){ notify('Refresh Failed.', 'error');}
+      );
+    },
+    loadScreen: function(url, callback, errback){
+      if (!url || (this.screen && url == this.screen.src)) {return;}
+      var img = new Image(),
+          self = this;
+      self.refreshing = true;
+      img.crossOrigin = 'anonymous';
+      img.addEventListener('load', function(){
+        self.layout.screen_ratio = img.height / img.width;
+        self.refreshing = false;
+        self.screen = img;
+        if (callback) { callback(); }
+        notify('Refresh Done.', 'success')
+      });
+      img.addEventListener('error', function(err){
+        console.log('loadScreen', err);
+        self.refreshing = false;
+        if (errback) {errback(err);}
+      });
+      img.src = url;
+    },
+    saveScreenCrop: function() {
+      var bound = this.overlays.crop_bounds.bound;
+      if (bound === null) {
+        notify('还没选择截图区域！', 'warn');
+        return;
+      }
+      var filename = window.prompt('保存的文件名, 不需要输入.png扩展名');
+      if (!filename){
+        return;
+      }
+      filename = filename + '.png';
+      var self = this;
+      $.ajax({
+        url: '/images/screenshot',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          screenname: self.device.latest_screen,
+          filename: filename,
+          bound: bound,
+        },
+        success: function(res){
+          console.log(res)
+          notify('图片保存成功', 'success');
+          ws.send(JSON.stringify({command: "refresh"}))
+          $('#screen-crop').css({'left':'0px', 'top':'0px','width':'0px', 'height':'0px'});
+          self.overlays.crop_bounds.bound = null;
+        },
+        error: function(err){
+          console.log(err)
+          notify('图片保存失败，打开调试窗口查看具体问题', 'error');
+        },
+      });
     },
   },
-})
+  watch: {
+    'tab': function(newVal, oldVal) {
+      if (workspace) { Blockly.svgResize(workspace); }
+    },
+    'layout.right_portion': function(newVal, oldVal) {
+      if (workspace) { Blockly.svgResize(workspace); }
+    },
+    'screen': function(newVal, oldVal) {
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(newVal, 0, 0, canvas.width, canvas.height);
+    },
+  },
+});
 
+/* workspace for Blockly */
+var workspace;
+/* screen canvas */
+var canvas = document.getElementById('canvas');
+/* websocket client for debug */
+var ws;
+
+/* init */
 $(function(){
-  var blocklyDiv = document.getElementById('blocklyDiv');
-  var workspace = Blockly.inject(blocklyDiv,
-    {toolbox: document.getElementById('toolbox')});
-  Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
-  Blockly.Python.addReservedWords('highlight_block');
-  M.workspace = workspace;
 
-  var RUN_BUTTON_TEXT = {
-    'ready': '<span class="glyphicon glyphicon-play"></span> 运行</a>',
-    'running': '<span class="glyphicon glyphicon-stop"></span> 停止</a>',
-  }
-
-  // Initial global value for blockly images
-  window.blocklyBaseURL = 'http://'+ location.host +'/static_imgs/';
-  window.blocklyImageList = null;
-  window.blocklyCropImageList = null;
-
-  //  useless
-  // $.getJSON('/api/images', function(res){
-  //   window.blocklyImageList = res.images;
-  //   window.blocklyBaseURL = res.baseURL;
-  // })
-
-
-  function changeRunningStatus(status, message){
-    M.runStatus = status;
-    var $play = $('a[href=#play]');
-    if (message) {
-      $play.notify(message, {className: 'success', position: 'top'});
-    }
-    if (status){
-      $play.html(RUN_BUTTON_TEXT[status]);
-    }
+  function restoreWorkspace() {
+    $.get('/workspace')
+      .success(function(res){
+        var xml = Blockly.Xml.textToDom(res.xml_text);
+        workspace.clear(); // clear up before add
+        Blockly.Xml.domToWorkspace(workspace, xml);
+        vm.generateCode();
+      })
+      .error(function(res){
+        alert(res.responseText);
+      })
   }
 
   function connectWebsocket(){
-    var ws = new WebSocket('ws://'+location.host+'/ws')
-    M.ws = ws;
+    ws = new WebSocket('ws://'+location.host+'/ws')
 
     ws.onopen = function(){
       ws.send(JSON.stringify({command: "refresh"}))
-      $.notify(
-        '与后台通信连接成功!!!',
-        {position: 'top center', className: 'success'});
-      getDeviceChoices();
+      notify('与后台通信连接成功!!!');
+      restoreWorkspace();
     };
     ws.onmessage = function(evt){
       try {
         var data = JSON.parse(evt.data)
         console.log(evt.data);
         switch(data.type){
+        case 'open':
+          vm.getDeviceChoices();
+          break;
         case 'image_list':
-          M.images = data.images;
           window.blocklyImageList = [];
-          $('#imagesDiv>ul').empty();
+          vm.images.splice(0, vm.images.length);
           for (var i = 0, info; i < data.images.length; i++) {
             info = data.images[i];
             window.blocklyImageList.push([info['name'], info['path']]);
-            $('#imagesDiv>ul')
-              .append($('<li>')
-                      .append($('<div>')
-                            .append($('<img>').attr('src', window.blocklyBaseURL + info['path']))
-                            .append($('<p>').text(info['name']))
-                      )
-              );
+            vm.images.push({name:info['name'], path:window.blocklyBaseURL+info['path']});
           }
           window.blocklyCropImageList = [];
           for (var i = 0, info; i < data.screenshots.length; i++) {
             info = data.screenshots[i]
             window.blocklyCropImageList.push([info['name'], info['path']]);
           }
-          vm.latest_screen = data.latest;
-          $('#btn-image-refresh').notify(
-            '已刷新',
+          vm.device.latest_screen = data.latest;
+          $('#btn-image-refresh').notify('已刷新',
             {className: 'success', position: 'right'}
           );
-          restoreWorkspace();
           break;
         case 'run':
-          changeRunningStatus(data.status, data.notify);
+          if (data.status == 'ready') {
+            vm.blockly.running = false;
+          }
+          if (data.notify) {notify(data.notify);}
           break;
         case 'stop':
-          changeRunningStatus(data.status, data.notify);
           break;
         case 'traceback':
           alert(data.output);
@@ -145,6 +321,7 @@ $(function(){
           var text = $console.html();
           $console.text($console.html() + data.output);
           $console.scrollTop($console.prop('scrollHeight'));
+          break;
         default:
           console.log("No match data type: ", data.type)
         }
@@ -159,294 +336,53 @@ $(function(){
     };
     ws.onclose = function(){
       console.log("Closed");
-      $.notify(
-        '与后台通信连接断开, 2s钟后重新连接 !!!',
-        {position: 'top center', className: 'error'})
+      notify('与后台通信连接断开, 2s钟后重新连接 !!!', 'error');
       setTimeout(function(){
         connectWebsocket()
       }, 2000)
     };
   }
-  connectWebsocket()
 
-  function generateCode(workspace) {
-    var xml = Blockly.Xml.workspaceToDom(workspace);
-    Blockly.Python.STATEMENT_PREFIX = '';
-    var pythonText = Blockly.Python.workspaceToCode(workspace);
+  /************************* init here *************************/
 
-    Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
-    var pythonDebugText = Blockly.Python.workspaceToCode(workspace);
+  // Initial global value for blockly images
+  window.blocklyBaseURL = 'http://'+ location.host +'/static_imgs/';
+  window.blocklyImageList = null;
+  window.blocklyCropImageList = null;
+  Blockly.Python.addReservedWords('highlight_block');
+  workspace = Blockly.inject(document.getElementById('blocklyDiv'),
+                    {toolbox: document.getElementById('toolbox')});
 
-    return {
-      xmlText: Blockly.Xml.domToPrettyText(xml),
-      pythonText: pythonText,
-      pythonDebugText: pythonDebugText,
-    }
-  }
+  var screenURL = '/images/screenshot?v=t' + new Date().getTime();
 
-  function saveWorkspace(callback) {
-    var $this = $('a[href=#save]');
-    var originHtml = $this.html();
-    $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 保存')
-
-    var g = generateCode(workspace);
-    $.ajax({
-      url: '/workspace',
-      method: 'POST',
-      data: {'xml_text': g.xmlText, 'python_text': g.pythonText},
-      success: function(e){
-        // console.log(e);
-        // $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 已保存')
-        $('a[href=#save]').notify('保存成功',
-          {className: 'success', position: 'left', autoHideDelay: 700});
-      },
-      error: function(e){
-        console.log(e);
-        $this.notify(e.responseText || '保存失败，请检查服务器连接是否正常',
-          {className: 'warn', elementPosition: 'left', autoHideDelay: 5000});
-      },
-      complete: function(){
-        $this.html(originHtml)
-        $('.code-python').text(g.pythonText);
-        if (callback){
-          callback(g)
-        }
-      }
-    })
-  }
-
-  function updateGenerate(workspace) {
-    var g = generateCode(workspace);
-    $('.code-python').text(g.pythonText);
-  }
-
-  function updateFunction(event) {
-    updateGenerate(workspace)
-    if (updateFunction.timeoutKey) {
-      clearTimeout(updateFunction.timeoutKey);
-    }
-    updateFunction.timeoutKey = setTimeout(saveWorkspace, 1400);
-  }
-
-  function restoreWorkspace() {
-    // do nothing if not visible.
-    if ($('#blocklyDiv').css('display') == 'none') {
-      return;
-    }
-    $.get('/workspace')
-      .success(function(res){
-        var xml = Blockly.Xml.textToDom(res.xml_text);
-        // clear up before add
-        workspace.clear();
-        Blockly.Xml.domToWorkspace(workspace, xml);
-        updateGenerate(workspace)
-      })
-      .error(function(res){
-        alert(res.responseText);
-      })
-      .complete(function(){
-        setTimeout(function(){
-          updateFunction();
-          //workspace.addChangeListener(updateFunction);
-        }, 700)
-      })
-  }
-
-  function sendWebsocket(message){
-    var data = JSON.stringify(message);
-    M.ws.send(data);
-  }
-
-  $('a[href=#save]').click(function(event){
-    event.preventDefault();
-    saveWorkspace()
-  })
-
-  $('a[href=#play]').click(function(event){
-    event.preventDefault();
-    console.log("Click play")
-    M.workspace.traceOn(true); // enable step run
-    var g = generateCode(workspace);
-    var isPlay = M.runStatus == 'running';
-    sendWebsocket({command: (isPlay ? 'stop' : 'run'), code: g.pythonDebugText})
-  })
-
-  $('.btn-clear-console').click(function(){
-    $('pre.console').text('');
-  })
-
-  $('li[role=presentation]').click(function(){
-    var text = $.trim($(this).text());
-    M.workspace.setVisible(text === 'Blockly');
-    setTimeout(function () {
-      Blockly.svgResize(M.workspace);
-    }, 10);
-  })
-
-  $('#btn-save-screen').click(function(){
-    if (crop_bounds.bound === null) {
-      $.notify('还没选择截图区域！');
-      return;
-    }
-    var filename = window.prompt('保存的文件名, 不需要输入.png扩展名');
-    if (!filename){
-      return;
-    }
-    filename = filename + '.png';
-    $.ajax({
-      url: '/images/screenshot',
-      method: 'POST',
-      dataType: 'json',
-      data: {
-        screenname: vm.latest_screen,
-        filename: filename,
-        bound: crop_bounds.bound,
-      },
-      success: function(res){
-        console.log(res)
-        $.notify('图片保存成功', 'success')
-        sendWebsocket({command: 'refresh'})
-        $('#screen-crop').css({'left':'0px', 'top':'0px','width':'0px', 'height':'0px'});
-      },
-      error: function(err){
-        console.log(err)
-        $.notify('图片保存失败，打开调试窗口查看具体问题')
-      },
-    })
-  })
-
-  $('#btn-refresh-screen').click(function(){
-    M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
-    var $this = $(this);
-    $this.notify('Refreshing', {className: 'info', position: 'top'})
-    $this.prop('disabled', true);
-
-    loadCanvasImage(M.canvas, M.screenURL, function(err){
-      if (err){
-        $this.notify(err, 'error')
-        getDeviceChoices();
-      }
-      $this.prop('disabled', false);
-      sendWebsocket({command: 'refresh'})
-    })
-  })
-
-  function getDeviceChoices(){
-    $.ajax({
-      url: '/device',
-      method: 'GET',
-      dataType: 'json',
-      data: {
-        platform: vm.device.platform,
-      },
-      success: function(data){
-        // clean old devices
-        vm.android_serials.splice(0, vm.android_serials.length);
-        for (var i = 0, s; i < data.android.length; i++) {
-          s = data.android[i];
-          vm.android_serials.push(s);
-        }
-        $('#device-chooser').show();
-      },
-      error: function(err) {
-        console.log(222, err);
-      }
-    });
-  }
-
-  $('#btn-change-device').click(function(){
-    getDeviceChoices();
-  });
-
-
-  $('.fancybox').fancybox()
-
-  function getPageHeight(){
-    return document.documentElement.clientHeight;
-  }
-
-  function resizeCanvas(canvas){
-    var width = $('#screen-wrapper').width();
-    canvas.setAttribute('width', width);
-    canvas.setAttribute('height', width*(M.screenRatio || 1.78));
-    // loadCanvasImage(canvas, M.screenURL);
-  }
-
-  function loadCanvasImage(canvas, url, callback){
-    var context = canvas.getContext('2d')
-    var imageObj = new Image();
-    url = url || M.screenURL;
-    imageObj.crossOrigin="anonymous";
-    imageObj.onload = function(){
-      M.screenRatio = imageObj.height / imageObj.width;
-      M.screenScale = canvas.width/imageObj.width; // global
-      var height = Math.floor(M.screenScale*imageObj.height);
-      canvas.setAttribute('height', height);
-      context.drawImage(imageObj, 0, 0, canvas.width, canvas.height);
-      var $wrapper = $(canvas).parent('div')
-      $wrapper.height(height);
-      if (callback) {
-        callback()
-      }
-    }
-    imageObj.onerror = function(){
-      if (callback){
-        callback("Refresh failed.")
-      }
-    }
-    imageObj.src = url;
-  }
-
-  function writeMessage(canvas, message) {
-    var context = canvas.getContext('2d');
-    context.font = '18pt Calibri';
-    context.fillStyle = 'black';
-    context.fillText(message, 10, 25);
-  }
-
+  // listen resize event
   function onResize(){
-    var blocklyDivHeight = getPageHeight() - $("#blocklyDiv").offset().top;
-    console.log($("#console-left").height())
-    if (!$('#console-left').is(':hidden')){
-      blocklyDivHeight -= $("#console-left").height() + 20;
-    }
-    console.log("blockly height:", blocklyDivHeight)
-    $('#blocklyDiv').height(blocklyDivHeight-5);
-    Blockly.svgResize(M.workspace);
-    resizeCanvas(M.canvas);
+    vm.layout.width = document.documentElement.clientWidth;
+    vm.layout.height = document.documentElement.clientHeight;
+    var blocklyDivHeight = vm.layout.height - $("#blocklyDiv").offset().top;
+    var consoleHeight = $('#left-panel>div:last').height();
+    $('#blocklyDiv').height(Math.max(300, blocklyDivHeight-consoleHeight-20));
+    Blockly.svgResize(workspace);
   }
-
-  M.canvas = document.getElementById('canvas');
-  M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
   window.addEventListener('resize', onResize, false);
   onResize();
+
+  // WebSocket for debug
+  connectWebsocket()
+
+  //------------------------ canvas overlays --------------------------//
 
   function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
-      x: Math.floor((evt.clientX - rect.left) / M.screenScale),
-      y: Math.floor((evt.clientY - rect.top) / M.screenScale),
+      x: Math.floor((evt.clientX - rect.left) / vm.layout.screen_scale),
+      y: Math.floor((evt.clientY - rect.top) / vm.layout.screen_scale),
     };
   }
 
-  var canvas = document.getElementById('canvas');
-  canvas.addEventListener('mousemove', function(evt) {
-    var mousePos = getMousePos(canvas, evt);
-    var message = 'Mouse position: ' + mousePos.x + ',' + mousePos.y;
-    // writeMessage(canvas, message);
-    $('.status-bar>span').text(message);
-    // console.log(message);
-  }, false);
-
-  // $("#console-left").hide(function(){
-    // console.log("HE")
-    // onResize(); //Blockly.fireUiEvent(window, 'resize');
-  // });
-
-  //------------ canvas overlay parts ------------//
   function getCanvasPos(x, y) {
-      var left = M.screenScale * x,
-          top  = M.screenScale * y;
+      var left = vm.layout.screen_scale * x,
+          top  = vm.layout.screen_scale * y;
       return {left, top};
   }
 
@@ -577,6 +513,7 @@ $(function(){
       var start = getMousePos(canvas, crop_bounds.start),
           end = getMousePos(canvas, crop_bounds.end);
       crop_bounds.bound = [start.x, start.y, end.x, end.y];
+      vm.overlays.crop_bounds.bound = [start.x, start.y, end.x, end.y];
     }
     crop_bounds.start = null;
     crop_rect_bounds.start = null;
@@ -590,6 +527,7 @@ $(function(){
       var start = getMousePos(canvas, crop_bounds.start),
           end = getMousePos(canvas, crop_bounds.end);
       crop_bounds.bound = [start.x, start.y, end.x, end.y];
+      vm.overlays.crop_bounds.bound = [start.x, start.y, end.x, end.y];
     }
     crop_bounds.start = null;
     crop_rect_bounds.start = null;
@@ -864,15 +802,14 @@ $(function(){
       conn = blk.getInput('IMAGE_CROP').connection.targetConnection;
       blk = conn && conn.sourceBlock_;
     }
-    var screen = blk && block_screen[blk.id] || vm.latest_screen,
+    var screen = blk && block_screen[blk.id] || vm.device.latest_screen,
         url = window.blocklyBaseURL + screen;
-    if (url != M.canvas.src) {
-      loadCanvasImage(M.canvas, window.blocklyBaseURL + screen);
-    }
+    vm.loadScreen(url);
   }
 
   function onUIFieldChange(evt) {
     if (evt.type != Blockly.Events.CHANGE || evt.element != 'field') {return;}
+    vm.blockly.dirty = true;
     var blk = workspace.getBlockById(evt.blockId);
     if (blk.type == 'atx_image_crop' && evt.name == 'FILENAME') {
       block_screen[evt.blockId] = evt.newValue;
@@ -880,6 +817,7 @@ $(function(){
   }
   function onCreateBlock(evt){
     if (evt.type != Blockly.Events.CREATE) {return;}
+    vm.blockly.dirty = true;
     for (var i = 0, bid; i < evt.ids.length; i++) {
       bid = evt.ids[i];
       var blk = workspace.getBlockById(bid);
@@ -890,6 +828,7 @@ $(function(){
   }
   function onDeleteBlock(evt){
     if (evt.type != Blockly.Events.DELETE) {return;}
+    vm.blockly.dirty = true;
     for (var i = 0, bid; i < evt.ids.length; i++) {
       bid = evt.ids[i];
       delete block_screen[bid];
@@ -899,6 +838,7 @@ $(function(){
     if (evt.type != Blockly.Events.MOVE && !evt.oldParentId && !evt.newParentId) {
       return;
     }
+    vm.blockly.dirty = true;
     var oldblk = evt.oldParentId ? workspace.getBlockById(evt.oldParentId) : null,
         newblk = evt.newParentId ? workspace.getBlockById(evt.newParentId) : null;
     if (oldblk) {
@@ -912,5 +852,4 @@ $(function(){
   workspace.addChangeListener(onDeleteBlock);
   workspace.addChangeListener(onUIFieldChange);
   workspace.addChangeListener(onBlockConnectionChange);
-
 })

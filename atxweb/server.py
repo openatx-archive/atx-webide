@@ -88,9 +88,7 @@ class ImageHandler(tornado.web.RequestHandler):
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        imgs = base.list_images(path=IMAGE_PATH)
-        imgs = [(os.path.basename(name), name) for name in imgs]
-        self.render('index.html', images=imgs)
+        self.render('index.html')
 
     def post(self):
         print self.get_argument('xml_text')
@@ -102,6 +100,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
 
     def open(self):
         log.info("WebSocket connected")
+        self.write_message({'type': 'open'})
         self._run = False
 
     def _highlight_block(self, id):
@@ -181,6 +180,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 self.write_message({'type': 'run', 'notify': '运行中'})
                 return
             self._run = True
+            self.write_message({'type': 'run', 'notify': '开始运行'})
             res = yield self.background_task(message.get('code'))
             self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束', 'result': res})
         else:

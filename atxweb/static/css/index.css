@@ -2,9 +2,20 @@ html, body{
   height: 100%;
 }
 
-.container-full {
-  margin: 0 auto;
-  width: 100%;
+a {
+  cursor: pointer;
+}
+
+#main-content {
+  min-width: 1000px;
+}
+
+#left-panel, #right-panel {
+  float: left;
+  position: relative;
+  min-height: 1px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .phone-screen {
@@ -79,4 +90,12 @@ pre.console {
   margin-left: auto;
   margin-right: auto;
   margin-bottom: 10px;
+}
+
+.box {
+  border: solid 1px red;
+}
+
+#resize-handle {
+  position: absolute;
 }
