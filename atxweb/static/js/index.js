@@ -171,7 +171,9 @@ var vm = new Vue({
     refreshScreen: function() {
       var url = '/images/screenshot?v=t' + new Date().getTime();
       this.loadScreen(url,
-        function(){ notify('Refresh Done.', 'success');},
+        function(){
+          notify('Refresh Done.', 'success');
+          ws.send(JSON.stringify({command: "refresh"}));},
         function(){ notify('Refresh Failed.', 'error');}
       );
     },
@@ -186,7 +188,6 @@ var vm = new Vue({
         self.refreshing = false;
         self.screen = img;
         if (callback) { callback(); }
-        notify('Refresh Done.', 'success')
       });
       img.addEventListener('error', function(err){
         console.log('loadScreen', err);
@@ -196,6 +197,10 @@ var vm = new Vue({
       img.src = url;
     },
     saveScreenCrop: function() {
+      if (this.device.latest_screen == '') {
+        notify('图片列表尚未刷新!', 'warn');
+        return;
+      }
       var bound = this.overlays.crop_bounds.bound;
       if (bound === null) {
         notify('还没选择截图区域！', 'warn');
@@ -219,7 +224,7 @@ var vm = new Vue({
         success: function(res){
           console.log(res)
           notify('图片保存成功', 'success');
-          ws.send(JSON.stringify({command: "refresh"}))
+          ws.send(JSON.stringify({command: "refresh"}));
           $('#screen-crop').css({'left':'0px', 'top':'0px','width':'0px', 'height':'0px'});
           self.overlays.crop_bounds.bound = null;
         },
@@ -297,9 +302,7 @@ $(function(){
             window.blocklyCropImageList.push([info['name'], info['path']]);
           }
           vm.device.latest_screen = data.latest;
-          $('#btn-image-refresh').notify('已刷新',
-            {className: 'success', position: 'right'}
-          );
+          notify('图片列表已刷新', 'success');
           break;
         case 'run':
           if (data.status == 'ready') {
