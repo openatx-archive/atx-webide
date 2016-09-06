@@ -31,6 +31,7 @@
             <li v-bind:class="{'active': tab=='blocklyDiv'}"><a @click="switchTab('blocklyDiv')">Blockly</a></li>
             <li v-bind:class="{'active': tab=='pythonDiv'}"><a @click="switchTab('pythonDiv')">Python</a></li>
             <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
+            <li v-if="blockly.selected" class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>单步运行</a></li>
             <li v-if="blockly.running" class="pull-right" @click="stopBlockly"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
             <li v-else class="pull-right" @click="runBlockly" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
             <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>

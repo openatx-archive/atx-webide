@@ -36,6 +36,7 @@ var vm = new Vue({
     refreshing: true, // should set to false after refreshScreen
     // blockly stuff
     blockly: {
+      selected: null, // Blockly.selected, only the statement ones.
       dirty: false, // has there any changes been made
       running: false,
       saving: false,
@@ -82,6 +83,7 @@ var vm = new Vue({
       this.blockly.pythonText = Blockly.Python.workspaceToCode(workspace);
       Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
       this.blockly.pythonDebugText = Blockly.Python.workspaceToCode(workspace);
+      Blockly.Python.STATEMENT_PREFIX = '';
       // highlight python code block
       this.$nextTick(function(){
         $("#python-code").text(this.blockly.pythonText);
@@ -102,7 +104,7 @@ var vm = new Vue({
           self.blockly.dirty = false;
         },
         error: function(e){
-          console.log(e);
+          console.log('保存失败:\n', e);
           notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
         },
       });
@@ -111,6 +113,15 @@ var vm = new Vue({
       this.blockly.running = true;
       workspace.traceOn(true); // enable step run
       ws.send(JSON.stringify({command: "run", code:this.blockly.pythonDebugText}));
+    },
+    runBlocklyStep: function(){
+      if (!this.blockly.selected) {return;}
+      var blk = workspace.getBlockById(this.blockly.selected),
+          func = Blockly.Python[blk.type],
+          code = func.call(blk, blk);
+      this.blockly.running = true;
+      console.log("running:\n", code);
+      ws.send(JSON.stringify({command: "run", code:code}));
     },
     stopBlockly: function(){
       console.log('stop');
@@ -136,7 +147,7 @@ var vm = new Vue({
         },
         error: function(err) {
           notify('获取设备列表失败', 'error');
-          console.log(222, err);
+          console.log('获取设备列表失败:\n', err);
         }
       });
     },
@@ -190,7 +201,7 @@ var vm = new Vue({
         if (callback) { callback(); }
       });
       img.addEventListener('error', function(err){
-        console.log('loadScreen', err);
+        console.log('loadScreen Error:\n', err);
         self.refreshing = false;
         if (errback) {errback(err);}
       });
@@ -222,14 +233,14 @@ var vm = new Vue({
           bound: bound,
         },
         success: function(res){
-          console.log(res)
+          // console.log(res);
           notify('图片保存成功', 'success');
           ws.send(JSON.stringify({command: "refresh"}));
           $('#screen-crop').css({'left':'0px', 'top':'0px','width':'0px', 'height':'0px'});
           self.overlays.crop_bounds.bound = null;
         },
         error: function(err){
-          console.log(err)
+          console.log('图片保存失败:\n', err);
           notify('图片保存失败，打开调试窗口查看具体问题', 'error');
         },
       });
@@ -283,7 +294,7 @@ $(function(){
     ws.onmessage = function(evt){
       try {
         var data = JSON.parse(evt.data)
-        console.log(evt.data);
+        console.log('websocket message: ', evt.data);
         switch(data.type){
         case 'open':
           vm.getDeviceChoices();
@@ -338,7 +349,7 @@ $(function(){
       // console.error(err)
     };
     ws.onclose = function(){
-      console.log("Closed");
+      console.log("Websocket Closed");
       notify('与后台通信连接断开, 2s钟后重新连接 !!!', 'error');
       setTimeout(function(){
         connectWebsocket()
@@ -767,6 +778,12 @@ $(function(){
 
   function onUISelectedChange(evt){
     if (evt.type != Blockly.Events.UI || evt.element != 'selected') {return;}
+    // track selected to run special statement, (statement blocks: nextConnection != null)
+    if (Blockly.selected && Blockly.selected.nextConnection) {
+      vm.blockly.selected = Blockly.selected.id;
+    } else {
+      vm.blockly.selected = null;
+    }
     if (evt.oldValue != null) {
       var oldblk = workspace.getBlockById(evt.oldValue);
       if (oldblk === null) { return;}
