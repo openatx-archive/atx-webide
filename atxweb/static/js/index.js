@@ -331,7 +331,7 @@ var vm = new Vue({
           this.setInputsInline(true);
           this.setPreviousStatement(true);
           this.setNextStatement(true);
-          this.setColour('#333333');
+          this.setColour('#74a55b');
           this.setTooltip('');
           this.setHelpUrl(helpUrl);
         }
@@ -353,18 +353,26 @@ var vm = new Vue({
 
       // update xml data && re populate toolbox
       var toolbox = document.getElementById('toolbox'),
-          node = document.createElement('block');
+          nodes = toolbox.lastElementChild.children;
+      for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].getAttribute('type') == block_type) {
+          return;
+        }
+      }
+      var node = document.createElement('block');
       node.setAttribute('type', block_type);
       toolbox.lastElementChild.appendChild(node);
       var tree = Blockly.Options.parseToolboxTree(toolbox);
+      // NOTE: the ones used in workspace can not be deleted
       workspace.toolbox_.populate_(tree);
     },
     updateExtBlocks: function(){
       var toolbox = document.getElementById('toolbox'),
           nodes = toolbox.lastElementChild.children;
       // remove old
-      for (var i = 0; i < nodes.length; i++) {
-        nodes[i].remove();
+      for (var i = 0, node; i < nodes.length; i++) {
+        node = nodes[i];
+        toolbox.lastElementChild.removeChild(node);
       }
       // add new
       for (var i = 0, f; i < this.ext.funcs.length; i++) {
@@ -472,7 +480,9 @@ $(function(){
     $.get('/extension')
       .success(function(res){
         vm.ext.pythonText = res.ext_text;
-        vm.updateExtBlocks();
+        vm.$nextTick(function(){
+          this.updateExtBlocks();
+        });
         pyexteditor.setValue(res.ext_text);
         pyexteditor.selection.clearSelection();
         restoreWorkspace();

@@ -173,17 +173,51 @@
         </block>
         <block type="atx_blank"></block>
       </category>
-      <category name="逻辑" colour="200">
+      <category name="逻辑" colour="210">
         <block type="controls_if"></block>
         <block type="logic_compare"></block>
-        <block type="controls_repeat_ext"></block>
+        <block type="logic_operation"></block>
+        <block type="logic_negate"></block>
+        <block type="logic_null" disabled="true"></block>
       </category>
-      <category name="变量" colour="200">
+      <category name="循环" colour="120">
+        <block type="controls_repeat_ext">
+          <value name="TIMES">
+            <shadow type="math_number">
+              <field name="NUM">10</field>
+            </shadow>
+          </value>
+        </block>
+        <block type="controls_repeat"></block>
+        <block type="controls_whileUntil"></block>
+        <block type="controls_forEach"></block>
+        <block type="controls_flow_statements"></block>
+      </category>
+      <category name="变量" colour="330">
+        <block type="variables_set"></block>
+        <block type="variables_get"></block>
         <block type="math_number"></block>
         <block type="math_arithmetic"></block>
+        <block type="math_random_int">
+          <value name="FROM">
+            <shadow type="math_number">
+              <field name="NUM">1</field>
+            </shadow>
+          </value>
+          <value name="TO">
+            <shadow type="math_number">
+              <field name="NUM">100</field>
+            </shadow>
+          </value>
+        </block>
+        <block type="math_random_float"></block>
         <block type="text"></block>
+        <block type="lists_create_with">
+          <mutation items="0"></mutation>
+        </block>
+        <block type="lists_create_with"></block>
       </category>
-      <category name="常用" colour="200">
+      <category name="常用" colour="240">
         <block type="text_print">
           <value name="TEXT">
             <shadow type="text">
@@ -192,10 +226,7 @@
           </value>
         </block>
       </category>
-      <category name="扩展" colour="200">
-        <block type="text">
-          <field name="TEXT">ex.server_call(...) ex.login</field>
-        </block>
+      <category name="扩展" colour="100">
       </category>
     </xml>
 
