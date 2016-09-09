@@ -251,7 +251,7 @@ var vm = new Vue({
         if (callback) { callback(); }
       });
       img.addEventListener('error', function(err){
-        console.log('loadScreen Error:\n', err);
+        console.log('loadScreen Error:', err);
         self.refreshing = false;
         if (errback) {errback(err);}
       });
@@ -298,6 +298,7 @@ var vm = new Vue({
     savePyExtension: function(){
       if (!pyexteditor) {return;}
       this.ext.pythonText = pyexteditor.getValue();
+      this.updateExtBlocks();
       var self = this;
       $.ajax({
         url: '/extension',
@@ -308,12 +309,12 @@ var vm = new Vue({
           self.ext.dirty = false;
         },
         error: function(e){
-          console.log('Extension保存失败:\n', e);
+          console.log('Extension保存失败:', e);
           notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
         },
       });
     },
-    addExtBlock: function(name, args, code){
+    addExtBlock: function(name, args){
       if (!workspace) {return;}
       var helpUrl = 'https://github.com/codeskyblue/AirtestX';
       // register block
@@ -322,11 +323,12 @@ var vm = new Vue({
         init: function() {
           this.appendDummyInput()
               .appendField(name);
-          var dummy = this.appendDummyInput();
           for (var i = 0, arg; i < args.length; i++) {
             arg = args[i];
-            dummy.appendField();
+            this.appendDummyInput().appendField(arg[0]);
+            this.appendValueInput(arg[0]);
           }
+          this.setInputsInline(true);
           this.setPreviousStatement(true);
           this.setNextStatement(true);
           this.setColour('#333333');
@@ -334,23 +336,41 @@ var vm = new Vue({
           this.setHelpUrl(helpUrl);
         }
       }
-
       // register code generate
       Blockly.Python[block_type] = function(blk) {
         // import ext in front, must be defined in block code generate function...
         Blockly.Python.provideFunction_('atx_import_ext', ['import ext']);
-        return code + '\n';
+        var argv = [], v;
+        for (var i = 0, arg; i < args.length; i++) {
+          arg = args[i];
+          v = Blockly.Python.valueToCode(blk, arg[0], Blockly.Python.ORDER_ATOMIC);
+          if (v == '') { v = 'None';}
+          argv.push(arg[0] + '=' + v);
+        }
+        var code = 'ext.' + name + '(' + argv.join(', ') + ')';
+        return code;
       }
 
       // update xml data && re populate toolbox
       var toolbox = document.getElementById('toolbox'),
           node = document.createElement('block');
-      node.setAttribute('type', 'atx_hello');
+      node.setAttribute('type', block_type);
       toolbox.lastElementChild.appendChild(node);
       var tree = Blockly.Options.parseToolboxTree(toolbox);
       workspace.toolbox_.populate_(tree);
     },
     updateExtBlocks: function(){
+      var toolbox = document.getElementById('toolbox'),
+          nodes = toolbox.lastElementChild.children;
+      // remove old
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].remove();
+      }
+      // add new
+      for (var i = 0, f; i < this.ext.funcs.length; i++) {
+        f = this.ext.funcs[i];
+        this.addExtBlock(f.name, f.args);
+      }
     },
   },
   watch: {
@@ -377,9 +397,9 @@ var vm = new Vue({
         args = [];
         for (var j = 0; j < words.length; j++) {
           word = words[j];
-          m = word.match(/\s*(\w+)\=?/);
+          m = word.match(/\s*(\w+)(\s*\=\s*(\w+))?/);
           if (!m) {continue;}
-          args.push(m[1]);
+          args.push([m[1], m[3]||'']); // arg name & default value
         }
         this.ext.funcs.push({name, args});
       }
@@ -452,8 +472,10 @@ $(function(){
     $.get('/extension')
       .success(function(res){
         vm.ext.pythonText = res.ext_text;
+        vm.updateExtBlocks();
         pyexteditor.setValue(res.ext_text);
         pyexteditor.selection.clearSelection();
+        restoreWorkspace();
       })
       .error(function(res){
         alert(res.responseText);
@@ -466,7 +488,6 @@ $(function(){
     ws.onopen = function(){
       ws.send(JSON.stringify({command: "refresh"}))
       notify('与后台通信连接成功!!!');
-      restoreWorkspace();
       restoreExtension();
     };
     ws.onmessage = function(evt){
