@@ -5,6 +5,13 @@ html, body{
 a {
   cursor: pointer;
 }
+ul {
+  padding-left: 20px;
+}
+
+li {
+  list-style: none;
+}
 
 #main-content {
   min-width: 1000px;
@@ -104,4 +111,9 @@ pre.console {
 
 #resize-handle:hover {
   cursor: col-resize;
+}
+
+.tree-node {
+}
+.tree-node-folder {
 }

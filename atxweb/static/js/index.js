@@ -6,6 +6,48 @@ function notify(message, className, position, element, autoHideDelay){
   $.notify(message, {className, position, autoHideDelay});
 }
 
+Vue.component('tree-node', {
+  template: '#tree-node-template',
+  replace: true,
+  props: {
+    model: Object
+  },
+  data: function () {
+    return {
+      open: false
+    }
+  },
+  computed: {
+    isFolder: function () {
+      return this.model.children &&
+        this.model.children.length
+    }
+  },
+  methods: {
+    toggle: function () {
+      if (this.isFolder) {
+        this.open = !this.open
+      }
+    },
+    changeType: function () {
+      if (!this.isFolder) {
+        Vue.set(this.model, 'children', [])
+        this.addChild()
+        this.open = true
+      }
+    },
+    addChild: function () {
+      this.model.children.push({
+        name: 'new stuff'
+      })
+    },
+    openContextMenu: function(evt){
+      evt.preventDefault();
+      evt.stopPropagation();
+    },
+  }
+});
+
 /* Vue controls the layout */
 Vue.config.delimiters = ['${', '}'];
 var vm = new Vue({
@@ -53,6 +95,12 @@ var vm = new Vue({
       rect_bounds: {}, // atx_click_image
       swipe_points: {}, // atx_swipe
     },
+    // python extension
+    ext: {
+      dirty: false,
+      pythonText: '',
+      funcs: [],
+    },
   },
   computed: {
     canvas_width: function() {
@@ -74,20 +122,22 @@ var vm = new Vue({
     switchTab: function(which) {
       if (which == this.tab) { return; }
       if (this.tab == 'blocklyDiv' && this.blockly.dirty) {this.saveWorkspace();}
+      if (this.tab == 'pythonExtDiv' && this.ext.dirty) {this.savePyExtension();}
       this.tab = which;
     },
     generateCode: function(){
+      var pyprefix = '#-*- encoding: utf-8 -*-\n\n';
       this.blockly.xml = Blockly.Xml.workspaceToDom(workspace);
       this.blockly.xmlText = Blockly.Xml.domToPrettyText(this.blockly.xml),
       Blockly.Python.STATEMENT_PREFIX = '';
-      this.blockly.pythonText = Blockly.Python.workspaceToCode(workspace);
+      this.blockly.pythonText = pyprefix + Blockly.Python.workspaceToCode(workspace);
       Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
-      this.blockly.pythonDebugText = Blockly.Python.workspaceToCode(workspace);
+      this.blockly.pythonDebugText = pyprefix + Blockly.Python.workspaceToCode(workspace);
       Blockly.Python.STATEMENT_PREFIX = '';
       // highlight python code block
       this.$nextTick(function(){
-        $("#python-code").text(this.blockly.pythonText);
-        Prism.highlightAll();
+        pyviewer.setValue(this.blockly.pythonText);
+        pyviewer.selection.clearSelection();
       });
     },
     saveWorkspace: function(){
@@ -100,11 +150,11 @@ var vm = new Vue({
         method: 'POST',
         data: {'xml_text': this.blockly.xmlText, 'python_text': this.blockly.pythonText},
         success: function(data){
-          notify('保存成功', 'success');
+          notify('Workspace保存成功', 'success');
           self.blockly.dirty = false;
         },
         error: function(e){
-          console.log('保存失败:\n', e);
+          console.log('Workspace保存失败:\n', e);
           notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
         },
       });
@@ -245,6 +295,63 @@ var vm = new Vue({
         },
       });
     },
+    savePyExtension: function(){
+      if (!pyexteditor) {return;}
+      this.ext.pythonText = pyexteditor.getValue();
+      var self = this;
+      $.ajax({
+        url: '/extension',
+        method: 'POST',
+        data: {'python_text': this.ext.pythonText},
+        success: function(data){
+          notify('Extension保存成功', 'success');
+          self.ext.dirty = false;
+        },
+        error: function(e){
+          console.log('Extension保存失败:\n', e);
+          notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
+        },
+      });
+    },
+    addExtBlock: function(name, args, code){
+      if (!workspace) {return;}
+      var helpUrl = 'https://github.com/codeskyblue/AirtestX';
+      // register block
+      var block_type = 'atx_ext_' + name;
+      Blockly.Blocks[block_type] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField(name);
+          var dummy = this.appendDummyInput();
+          for (var i = 0, arg; i < args.length; i++) {
+            arg = args[i];
+            dummy.appendField();
+          }
+          this.setPreviousStatement(true);
+          this.setNextStatement(true);
+          this.setColour('#333333');
+          this.setTooltip('');
+          this.setHelpUrl(helpUrl);
+        }
+      }
+
+      // register code generate
+      Blockly.Python[block_type] = function(blk) {
+        // import ext in front, must be defined in block code generate function...
+        Blockly.Python.provideFunction_('atx_import_ext', ['import ext']);
+        return code + '\n';
+      }
+
+      // update xml data && re populate toolbox
+      var toolbox = document.getElementById('toolbox'),
+          node = document.createElement('block');
+      node.setAttribute('type', 'atx_hello');
+      toolbox.lastElementChild.appendChild(node);
+      var tree = Blockly.Options.parseToolboxTree(toolbox);
+      workspace.toolbox_.populate_(tree);
+    },
+    updateExtBlocks: function(){
+    },
   },
   watch: {
     'tab': function(newVal, oldVal) {
@@ -257,6 +364,27 @@ var vm = new Vue({
       var ctx = canvas.getContext('2d');
       ctx.drawImage(newVal, 0, 0, canvas.width, canvas.height);
     },
+    'ext.pythonText': function(newVal, oldVal) {
+      this.ext.funcs.splice(0, this.ext.funcs.length);
+      var m, words, word, name, args,
+          lines = this.ext.pythonText.split('\n');
+      for (var i = 0, line; i < lines.length; i++) {
+        line = lines[i];
+        m = line.match(/^\s*def\s+(\w+)\s*\((.*)\)\s*:/);
+        if (!m) { continue; }
+        name = m[1];
+        words = m[2].split(',')
+        args = [];
+        for (var j = 0; j < words.length; j++) {
+          word = words[j];
+          m = word.match(/\s*(\w+)\=?/);
+          if (!m) {continue;}
+          args.push(m[1]);
+        }
+        this.ext.funcs.push({name, args});
+      }
+      // console.log('ext.funcs updated:', this.ext.funcs);
+    },
   },
 });
 
@@ -266,9 +394,46 @@ var workspace;
 var canvas = document.getElementById('canvas');
 /* websocket client for debug */
 var ws;
+/* ace code editor */
+var pyviewer;
+var pyexteditor;
 
 /* init */
 $(function(){
+
+  function initEditors() {
+    // in pythonDiv
+    pyviewer = ace.edit('python-code-viewer');
+    pyviewer.container.style.opacity = "";
+    pyviewer.$blockScrolling = Infinity;
+    pyviewer.renderer.setScrollMargin(10, 10, 10, 10);
+    pyviewer.getSession().setMode('ace/mode/python');
+    pyviewer.setOptions({
+      readOnly: true,
+      maxLines: 40,
+      fontSize: 14,
+      theme: 'ace/theme/monokai',
+      autoScrollEditorIntoView: false,
+      showPrintMargin: false,
+    });
+    // in pythonExtDiv
+    pyexteditor = ace.edit('python-ext-editor');
+    pyexteditor.container.style.opacity = "";
+    pyexteditor.$blockScrolling = Infinity;
+    pyexteditor.renderer.setScrollMargin(10, 10, 10, 10);
+    pyexteditor.getSession().setMode('ace/mode/python');
+    pyexteditor.setOptions({
+      maxLines: 40,
+      fontSize: 14,
+      newLineMode: 'unix',
+      theme: 'ace/theme/monokai',
+      keyboardHandler: 'ace/keyboard/vim',
+    });
+    // set data dirty flag
+    pyexteditor.on('change', function(){
+      vm.ext.dirty = true;
+    });
+  }
 
   function restoreWorkspace() {
     $.get('/workspace')
@@ -283,6 +448,18 @@ $(function(){
       })
   }
 
+  function restoreExtension() {
+    $.get('/extension')
+      .success(function(res){
+        vm.ext.pythonText = res.ext_text;
+        pyexteditor.setValue(res.ext_text);
+        pyexteditor.selection.clearSelection();
+      })
+      .error(function(res){
+        alert(res.responseText);
+      })
+  }
+
   function connectWebsocket(){
     ws = new WebSocket('ws://'+location.host+'/ws')
 
@@ -290,6 +467,7 @@ $(function(){
       ws.send(JSON.stringify({command: "refresh"}))
       notify('与后台通信连接成功!!!');
       restoreWorkspace();
+      restoreExtension();
     };
     ws.onmessage = function(evt){
       try {
@@ -382,6 +560,7 @@ $(function(){
   onResize();
 
   // WebSocket for debug
+  initEditors();
   connectWebsocket()
 
   //------------------------ canvas overlays --------------------------//
@@ -884,4 +1063,4 @@ $(function(){
     });
   }
   setupResizeHandle();
-})
+});

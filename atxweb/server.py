@@ -207,6 +207,23 @@ class WorkspaceHandler(tornado.web.RequestHandler):
         write_file('blockly.xml', xml_text)
         write_file('blockly.py', python_text)
 
+class ExtensionHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        ret = {}
+        default = '\n'.join([
+            '# -*- encoding: utf-8 -*-',
+            '#',
+            '# Created on: %s\n\n' % time.ctime(),
+        ])
+        ret['ext_text'] = read_file('ext.py', default=default)
+        self.write(ret)
+
+    def post(self):
+        log.info('Save extension')
+        python_text = self.get_argument('python_text')
+        log.info(repr(python_text))
+        write_file('ext.py', python_text)
 
 class ScreenshotHandler(tornado.web.RequestHandler):
 
@@ -292,6 +309,7 @@ def make_app(settings={}):
         (r"/", MainHandler),
         (r'/ws', DebugWebSocket), # code debug
         (r"/workspace", WorkspaceHandler), # save and write workspace
+        (r"/extension", ExtensionHandler), # save and write py ext
         (r"/images/screenshot", ScreenshotHandler),
         (r'/api/images', ImageHandler),
         (r'/device', DeviceHandler),
@@ -336,7 +354,7 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
 
     if open_browser:
         url = 'http://127.0.0.1:{}'.format(web_port)
-        webbrowser.open(url, new=2) # 2: open new tab if possible
+        # webbrowser.open(url, new=2) # 2: open new tab if possible
 
     application.listen(web_port)
     log.info("Server started.")
