@@ -1,5 +1,5 @@
 /* utils functions */
-function notify(message, className, position, element, autoHideDelay){
+function notify(message, className, position, autoHideDelay, element){
   className = className || 'info';
   position = position || 'top center';
   autoHideDelay = autoHideDelay || 1500;
@@ -99,7 +99,6 @@ var vm = new Vue({
     ext: {
       dirty: false,
       pythonText: '',
-      funcs: [],
     },
   },
   computed: {
@@ -123,6 +122,7 @@ var vm = new Vue({
       if (which == this.tab) { return; }
       if (this.tab == 'blocklyDiv' && this.blockly.dirty) {this.saveWorkspace();}
       if (this.tab == 'pythonExtDiv' && this.ext.dirty) {this.savePyExtension();}
+      if (which == 'pythonExtDiv' && pyexteditor) {pyexteditor.focus();}
       this.tab = which;
     },
     generateCode: function(){
@@ -367,6 +367,24 @@ var vm = new Vue({
       workspace.toolbox_.populate_(tree);
     },
     updateExtBlocks: function(){
+      var m, words, word, name, args,
+          funcs = [],
+          lines = this.ext.pythonText.split('\n');
+      for (var i = 0, line; i < lines.length; i++) {
+        line = lines[i];
+        m = line.match(/^\s*def\s+(\w+)\s*\((.*)\)\s*:/);
+        if (!m) { continue; }
+        name = m[1];
+        words = m[2].split(',')
+        args = [];
+        for (var j = 0; j < words.length; j++) {
+          word = words[j];
+          m = word.match(/^\s*(\w+)(\s*\=\s*(\w+))?/);
+          if (!m) {continue;}
+          args.push([m[1], m[3]||'']); // arg name & default value
+        }
+        funcs.push({name, args});
+      }
       var toolbox = document.getElementById('toolbox'),
           nodes = toolbox.lastElementChild.children;
       // remove old
@@ -375,8 +393,8 @@ var vm = new Vue({
         toolbox.lastElementChild.removeChild(node);
       }
       // add new
-      for (var i = 0, f; i < this.ext.funcs.length; i++) {
-        f = this.ext.funcs[i];
+      for (var i = 0, f; i < funcs.length; i++) {
+        f = funcs[i];
         this.addExtBlock(f.name, f.args);
       }
     },
@@ -391,27 +409,6 @@ var vm = new Vue({
     'screen': function(newVal, oldVal) {
       var ctx = canvas.getContext('2d');
       ctx.drawImage(newVal, 0, 0, canvas.width, canvas.height);
-    },
-    'ext.pythonText': function(newVal, oldVal) {
-      this.ext.funcs.splice(0, this.ext.funcs.length);
-      var m, words, word, name, args,
-          lines = this.ext.pythonText.split('\n');
-      for (var i = 0, line; i < lines.length; i++) {
-        line = lines[i];
-        m = line.match(/^\s*def\s+(\w+)\s*\((.*)\)\s*:/);
-        if (!m) { continue; }
-        name = m[1];
-        words = m[2].split(',')
-        args = [];
-        for (var j = 0; j < words.length; j++) {
-          word = words[j];
-          m = word.match(/\s*(\w+)(\s*\=\s*(\w+))?/);
-          if (!m) {continue;}
-          args.push([m[1], m[3]||'']); // arg name & default value
-        }
-        this.ext.funcs.push({name, args});
-      }
-      // console.log('ext.funcs updated:', this.ext.funcs);
     },
   },
 });
@@ -463,29 +460,60 @@ $(function(){
     });
   }
 
-  function restoreWorkspace() {
-    $.get('/workspace')
+  function restoreExtension() {
+    $.get('/extension')
       .success(function(res){
-        var xml = Blockly.Xml.textToDom(res.xml_text);
-        workspace.clear(); // clear up before add
-        Blockly.Xml.domToWorkspace(workspace, xml);
-        vm.generateCode();
+        vm.ext.pythonText = res.ext_text;
+        pyexteditor.setValue(res.ext_text);
+        pyexteditor.clearSelection();
+        vm.updateExtBlocks();
+        restoreWorkspace();
       })
       .error(function(res){
         alert(res.responseText);
       })
   }
 
-  function restoreExtension() {
-    $.get('/extension')
+  function restoreWorkspace() {
+    $.get('/workspace')
       .success(function(res){
-        vm.ext.pythonText = res.ext_text;
-        vm.$nextTick(function(){
-          this.updateExtBlocks();
-        });
-        pyexteditor.setValue(res.ext_text);
-        pyexteditor.selection.clearSelection();
-        restoreWorkspace();
+        var xml = Blockly.Xml.textToDom(res.xml_text);
+        // check ext functions, auto add missing ones.
+        var err_exts = [],
+            blks = $(xml).find('block');
+        for (var i = 0, type; i < blks.length; i++) {
+          type = blks[i].getAttribute('type');
+          if (!Blockly.Python[type]) {
+            if (type.substr(0,8) == 'atx_ext_') {
+              type = type.substr(8);
+            }
+            err_exts.push(type);
+          }
+        }
+        if (err_exts.length > 0) {
+          notify('Found undefined blocks! Auto generating. Check log for more details.',
+              'warn', null, 3000);
+          console.log('missing block definition:', err_exts);
+          var txt = '\n\n';
+          for (var i = 0, func; i < err_exts.length; i++) {
+            txt += 'def ' + err_exts[i] + '(*args, **kwargs):\n    pass\n';
+          }
+          pyexteditor.insert(txt);
+          vm.ext.pythonText += txt;
+          vm.ext.dirty = true;
+          vm.updateExtBlocks();
+        }
+        /* check done. */
+
+        workspace.clear(); // clear up before add
+        try {
+          Blockly.Xml.domToWorkspace(workspace, xml);
+        } catch(e) {
+          alert(e.message);
+          console.log('load workspace rror:', e, xml);
+          return;
+        }
+        vm.generateCode();
       })
       .error(function(res){
         alert(res.responseText);
@@ -573,6 +601,7 @@ $(function(){
   window.blocklyImageList = null;
   window.blocklyCropImageList = null;
   Blockly.Python.addReservedWords('highlight_block');
+  goog.asserts.ENABLE_ASSERTS = true;
   workspace = Blockly.inject(document.getElementById('blocklyDiv'),
                     {toolbox: document.getElementById('toolbox')});
 
@@ -580,7 +609,7 @@ $(function(){
 
   // listen resize event
   function onResize(){
-    vm.layout.width = document.documentElement.clientWidth;
+    vm.layout.width = $('#main-content').width()+30; // with margin 15+15
     vm.layout.height = document.documentElement.clientHeight;
     var blocklyDivHeight = vm.layout.height - $("#blocklyDiv").offset().top;
     var consoleHeight = $('#left-panel>div:last').height();
@@ -1032,8 +1061,11 @@ $(function(){
       conn = blk.getInput('IMAGE_CROP').connection.targetConnection;
       blk = conn && conn.sourceBlock_;
     }
-    var screen = blk && block_screen[blk.id] || vm.device.latest_screen,
-        url = window.blocklyBaseURL + screen;
+    var screen = blk && block_screen[blk.id];
+    if (!screen & vm.device.latest_screen == '') {
+      return;
+    }
+    var url = window.blocklyBaseURL + (screen || vm.device.latest_screen);
     vm.loadScreen(url);
   }
 
