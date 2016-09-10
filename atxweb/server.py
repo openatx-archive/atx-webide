@@ -129,7 +129,6 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             if device is None:
                 raise RuntimeError('No Device!')
 
-            print 111, os.getcwd()
             mod_ext = imp.load_source('ext', 'ext.py')
 
             exec code in {
@@ -343,7 +342,7 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
     application = make_app({
         'static_path': os.path.join(__dir__, 'static'),
         'template_path': os.path.join(__dir__, 'static'),
-        'debug': True,
+        # 'debug': True,
     })
     if not web_port:
         web_port = get_valid_port()
