@@ -99,6 +99,7 @@ var vm = new Vue({
     ext: {
       dirty: false,
       pythonText: '',
+      vimmode: true,
     },
   },
   computed: {
@@ -167,12 +168,11 @@ var vm = new Vue({
     runBlocklyStep: function(){
       if (!this.blockly.selected) {return;}
       Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
+      Blockly.Python.init(workspace);
       var blk = workspace.getBlockById(this.blockly.selected),
           func = Blockly.Python[blk.type],
           code = func.call(blk, blk);
-      if (blk.type.substr(0, 8) == 'atx_ext_') {
-        code = 'import atx\n' + code;
-      }
+      Blockly.Python.finish(code);
       Blockly.Python.STATEMENT_PREFIX = '';
       this.blockly.running = true;
       console.log("running:\n", code);
@@ -325,6 +325,11 @@ var vm = new Vue({
       var helpUrl = 'https://github.com/codeskyblue/AirtestX';
       // register block
       var block_type = 'atx_ext_' + name;
+      var inject_device = false;
+      if (args.length > 0 && args[0][0] == 'd') {
+        args = args.splice(1, args.length);
+        inject_device = true;
+      }
       Blockly.Blocks[block_type] = {
         init: function() {
           this.appendDummyInput()
@@ -347,6 +352,7 @@ var vm = new Vue({
         // import ext in front, must be defined in block code generate function...
         Blockly.Python.provideFunction_('atx_import_ext', ['import ext']);
         var argv = [], v;
+        if (inject_device) {argv.push('d');}
         for (var i = 0, arg; i < args.length; i++) {
           arg = args[i];
           v = Blockly.Python.valueToCode(blk, arg[0], Blockly.Python.ORDER_ATOMIC);
@@ -406,7 +412,15 @@ var vm = new Vue({
     },
     clearConsole: function(){
       $('pre.console').html('');
-    }
+    },
+    toggleExtVimMode: function(){
+      this.ext.vimmode = !this.ext.vimmode;
+      if (this.ext.vimmode) {
+        pyexteditor.setKeyboardHandler('ace/keyboard/vim');
+      } else {
+        pyexteditor.setKeyboardHandler();
+      }
+    },
   },
   watch: {
     'tab': function(newVal, oldVal) {
@@ -463,6 +477,20 @@ $(function(){
       theme: 'ace/theme/monokai',
       keyboardHandler: 'ace/keyboard/vim',
     });
+    // handle Vim write
+    ace.config.loadModule('ace/keyboard/vim', function(module){
+      module.Vim.defineEx('write', 'w', function() {
+        console.log(':write triggered');
+        vm.savePyExtension();
+      });
+      pyexteditor.setKeyboardHandler('ace/keyboard/vim');
+    });
+    // handle Ctrl-S
+    pyexteditor.commands.addCommand({
+      name: 'savePyExtension',
+      bindKey: {win:'Ctrl-s', mac:'Command-s'},
+      exec: function(editor) { vm.savePyExtension(); },
+    });
     // set data dirty flag
     pyexteditor.on('change', function(){
       vm.ext.dirty = true;
@@ -486,6 +514,8 @@ $(function(){
   function restoreWorkspace() {
     $.get('/workspace')
       .success(function(res){
+        // change to blockly tab
+        vm.tab = 'blocklyDiv';
         var xml = Blockly.Xml.textToDom(res.xml_text);
         // check ext functions, auto add missing ones.
         var err_exts = [],
@@ -514,15 +544,17 @@ $(function(){
         }
         /* check done. */
 
-        workspace.clear(); // clear up before add
-        try {
-          Blockly.Xml.domToWorkspace(workspace, xml);
-        } catch(e) {
-          alert(e.message);
-          console.log('load workspace rror:', e, xml);
-          return;
-        }
-        vm.generateCode();
+        vm.$nextTick(function(){
+          workspace.clear(); // clear up before add
+          try {
+            Blockly.Xml.domToWorkspace(workspace, xml);
+          } catch(e) {
+            alert(e.message);
+            console.log('load workspace error:', e, xml);
+            return;
+          }
+          vm.generateCode();
+        })
       })
       .error(function(res){
         alert(res.responseText);

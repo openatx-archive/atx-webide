@@ -41,6 +41,7 @@
             </template>
             <template v-if="tab=='pythonExtDiv'">
               <li class="pull-right" @click="savePyExtension"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
+              <li class="pull-right" @click='toggleExtVimMode'><a>VimMode: ${ ext.vimmode ? 'ON' : 'OFF'}</a></li>
             </template>
           </ul>
           <div class="tab-content" >
@@ -251,6 +252,7 @@
     <script src="{{static_url('js/notify.js')}}"></script>
     <!-- hightlight -->
     <script src="{{static_url('ace/ace.js')}}" data-manual></script>
+    <script src="{{static_url('ace/keybinding-vim.js')}}" data-manual></script>
     <!-- blockly -->
     <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
     <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>

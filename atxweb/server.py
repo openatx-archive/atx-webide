@@ -10,6 +10,7 @@ import json
 import traceback
 import locale
 import re
+import imp
 
 import cv2
 import tornado.ioloop
@@ -24,6 +25,7 @@ from atx import imutils
 from atx import base
 from atx.adbkit.client import Client as AdbClient
 
+mod_ext = None
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 log = logutils.getLogger("webide", level=logging.DEBUG)
@@ -127,8 +129,12 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             if device is None:
                 raise RuntimeError('No Device!')
 
+            print 111, os.getcwd()
+            mod_ext = imp.load_source('ext', 'ext.py')
+
             exec code in {
                 'd': device,
+                'ext': mod_ext,
                 'highlight_block': self._highlight_block,
                 '__name__': '__main__',
                 '__file__': filename}
@@ -222,7 +228,6 @@ class ExtensionHandler(tornado.web.RequestHandler):
     def post(self):
         log.info('Save extension')
         python_text = self.get_argument('python_text')
-        log.info(repr(python_text))
         write_file('ext.py', python_text)
 
 class ScreenshotHandler(tornado.web.RequestHandler):
