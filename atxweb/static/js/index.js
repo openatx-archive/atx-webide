@@ -1103,6 +1103,7 @@ $(function(){
     vm.blockly.dirty = true;
     var oldblk = evt.oldParentId ? workspace.getBlockById(evt.oldParentId) : null,
         newblk = evt.newParentId ? workspace.getBlockById(evt.newParentId) : null;
+    // TODO: update block_screen
     if (oldblk) {
 
     }
@@ -1110,10 +1111,17 @@ $(function(){
 
     }
   }
+  function onCommentChange(evt) {
+    if (evt.type != Blockly.Events.Change && evt.element != 'comment') {
+      return;
+    }
+    vm.blockly.dirty = true;
+  }
   workspace.addChangeListener(onCreateBlock);
   workspace.addChangeListener(onDeleteBlock);
   workspace.addChangeListener(onUIFieldChange);
   workspace.addChangeListener(onBlockConnectionChange);
+  workspace.addChangeListener(onCommentChange);
 
   /*--------------- resize handle ----------------*/
   function setupResizeHandle(){
