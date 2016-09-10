@@ -134,6 +134,9 @@
         <block type="atx_connect"></block>
         <block type="atx_start_app"></block>
         <block type="atx_stop_app"></block>
+        <block type="atx_delay"></block>
+        <block type="atx_keep_screen"></block>
+        <block type="atx_free_screen"></block>
         <block type="atx_click"></block>
         <block type="atx_swipe"></block>
         <block type="atx_screenshot">
@@ -171,6 +174,16 @@
             </block>
           </value>
         </block>
+        <block type="atx_wait">
+          <value name="ATX_PATTERN">
+            <block type="atx_image_file"></block>
+          </value>
+        </block>
+        <block type="atx_exists">
+          <value name="ATX_PATTERN">
+            <block type="atx_image_file"></block>
+          </value>
+        </block>
         <block type="atx_blank"></block>
       </category>
       <category name="逻辑" colour="210">
@@ -178,6 +191,7 @@
         <block type="logic_compare"></block>
         <block type="logic_operation"></block>
         <block type="logic_negate"></block>
+        <block type="logic_boolean"></block>
         <block type="logic_null" disabled="true"></block>
       </category>
       <category name="循环" colour="120">
@@ -225,6 +239,8 @@
             </shadow>
           </value>
         </block>
+        <block type="time_sleep"></block>
+        <block type="time_time"></block>
       </category>
       <category name="扩展" colour="100">
       </category>

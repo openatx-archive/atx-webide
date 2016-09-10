@@ -166,11 +166,17 @@ var vm = new Vue({
     },
     runBlocklyStep: function(){
       if (!this.blockly.selected) {return;}
+      Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
       var blk = workspace.getBlockById(this.blockly.selected),
           func = Blockly.Python[blk.type],
           code = func.call(blk, blk);
+      if (blk.type.substr(0, 8) == 'atx_ext_') {
+        code = 'import atx\n' + code;
+      }
+      Blockly.Python.STATEMENT_PREFIX = '';
       this.blockly.running = true;
       console.log("running:\n", code);
+      workspace.traceOn(true); // enable step run
       ws.send(JSON.stringify({command: "run", code:code}));
     },
     stopBlockly: function(){
@@ -347,7 +353,7 @@ var vm = new Vue({
           if (v == '') { v = 'None';}
           argv.push(arg[0] + '=' + v);
         }
-        var code = 'ext.' + name + '(' + argv.join(', ') + ')';
+        var code = 'ext.' + name + '(' + argv.join(', ') + ')\n';
         return code;
       }
 
@@ -1133,7 +1139,7 @@ $(function(){
       if (x <= 0) { return; }
       var p = 1 - (evt.originalEvent.pageX - 30)/(vm.layout.width-60);
       vm.layout.right_portion = Math.min(55, Math.max(parseInt(p*100), 25));
-      vm.layout.width = document.documentElement.clientWidth;
+      vm.layout.width = $('#main-content').width()+30; // with margin 15+15
     });
   }
   setupResizeHandle();
