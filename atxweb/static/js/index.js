@@ -398,6 +398,9 @@ var vm = new Vue({
         this.addExtBlock(f.name, f.args);
       }
     },
+    clearConsole: function(){
+      $('pre.console').html('');
+    }
   },
   watch: {
     'tab': function(newVal, oldVal) {

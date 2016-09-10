@@ -61,7 +61,7 @@
           </div>
           <div v-show="layout.right_portion<=50">
             <h4>Console
-              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+              <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>
