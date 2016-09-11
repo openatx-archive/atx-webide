@@ -61,6 +61,7 @@ var vm = new Vue({
     ios_url: '',
     // device status
     device: {
+      refreshing: false,
       platform: 'android',
       serial: '',
       latest_screen: '',
@@ -185,6 +186,7 @@ var vm = new Vue({
     },
     getDeviceChoices: function(){
       var self = this;
+      self.device.refreshing = true;
       $.ajax({
         url: '/device',
         method: 'GET',
@@ -200,10 +202,12 @@ var vm = new Vue({
             self.android_serial_choices.push(s);
           }
           self.choosing = true;
+          self.device.refreshing = false;
         },
         error: function(err) {
           notify('获取设备列表失败', 'error');
           console.log('获取设备列表失败:\n', err);
+          self.device.refreshing = false;
         }
       });
     },

@@ -358,7 +358,7 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
 
     if open_browser:
         url = 'http://127.0.0.1:{}'.format(web_port)
-        # webbrowser.open(url, new=2) # 2: open new tab if possible
+        webbrowser.open(url, new=2) # 2: open new tab if possible
 
     application.listen(web_port)
     log.info("Server started.")
