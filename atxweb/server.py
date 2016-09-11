@@ -342,7 +342,7 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
     application = make_app({
         'static_path': os.path.join(__dir__, 'static'),
         'template_path': os.path.join(__dir__, 'static'),
-        # 'debug': True,
+        'debug': True,
     })
     if not web_port:
         web_port = get_valid_port()
@@ -365,7 +365,26 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
     log.info("Listening port on 127.0.0.1:{}".format(web_port))
     tornado.ioloop.IOLoop.instance().start()
 
+def ignore_autoreload(*ignored_files):
+    '''hook & ignore autoreload for certain files'''
+    from tornado import autoreload
+    func = autoreload._check_file
+    if not hasattr(func, '_ignored_files'):
+        func = autoreload._check_file = hook_check_file(func)
+    func._ignored_files.update(ignored_files)
+
+import functools
+def hook_check_file(f):
+    @functools.wraps(f)
+    def _f(modify_times, path):
+        if path in _ignored_files:
+            return
+        f(modify_times, path)
+    _f._ignored_files = _ignored_files = set()
+    return _f
+
 if __name__ == '__main__':
+    ignore_autoreload('ext.py')
     if len(sys.argv) > 1:
         serial = sys.argv[1]
         if serial.startswith('http://'):
