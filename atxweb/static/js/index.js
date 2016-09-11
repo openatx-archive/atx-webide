@@ -71,7 +71,7 @@ var vm = new Vue({
       width: 1, //document.documentElement.clientWidth,
       height: 1, //document.documentElement.clientHeight,
       right_portion: 30, // max: 55, min: 25
-      screen_ratio: 1.5, // screen height/width
+      screen_ratio: 1.75, // screen height/width
       screen_scale: 0.4, // canvas width / screen width
     },
     // screen

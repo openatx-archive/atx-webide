@@ -34,7 +34,7 @@
             <li v-bind:class="{'active': tab=='pythonExtDiv'}"><a @click="switchTab('pythonExtDiv')">Exts</a></li>
             <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
             <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
-              <li v-if="blockly.selected" class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>单步运行</a></li>
+              <li v-if="blockly.selected" class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>运行该行</a></li>
               <li v-if="blockly.running" class="pull-right" @click="stopBlockly"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
               <li v-else class="pull-right" @click="runBlockly" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
               <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
@@ -75,7 +75,7 @@
             <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing">刷新</button>
             <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
             <template v-else>
-              <button v-if="choosing" type="button" class="btn btn-default btn-xs" @click="openChooseDevice">刷新设备列表</button>
+              <button v-if="choosing" type="button" class="btn btn-default btn-xs" @click="openChooseDevice">刷新设备</button>
               <button v-else type="button" class="btn btn-default btn-xs" @click="openChooseDevice">切换设备</button>
             </template>
           </h4>
@@ -120,7 +120,7 @@
           </div> <!-- #screen-wrapper -->
           <div v-show="layout.right_portion>50">
             <h4>Console
-              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+              <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>

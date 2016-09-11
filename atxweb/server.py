@@ -134,6 +134,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             exec code in {
                 'd': device,
                 'ext': mod_ext,
+                'atx': atx,
+                'os': os,
                 'highlight_block': self._highlight_block,
                 '__name__': '__main__',
                 '__file__': filename}
@@ -222,6 +224,8 @@ class ExtensionHandler(tornado.web.RequestHandler):
             '# Created on: %s\n\n' % time.ctime(),
         ])
         ret['ext_text'] = read_file('ext.py', default=default)
+        if not os.path.isfile('ext.py'):
+            write_file('ext.py', default)
         self.write(ret)
 
     def post(self):
@@ -324,6 +328,7 @@ def make_app(settings={}):
 
 def run(web_port=None, host=None, port=None, serial=None, platform="android", open_browser=True, workdir='.'):
     os.chdir(workdir)
+    ignore_autoreload('ext.py')
 
     global IMAGE_PATH
     if not os.path.exists('screenshots'):
@@ -384,7 +389,6 @@ def hook_check_file(f):
     return _f
 
 if __name__ == '__main__':
-    ignore_autoreload('ext.py')
     if len(sys.argv) > 1:
         serial = sys.argv[1]
         if serial.startswith('http://'):
