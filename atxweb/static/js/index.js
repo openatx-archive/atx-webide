@@ -652,6 +652,18 @@ $(function(){
 
   var screenURL = '/images/screenshot?v=t' + new Date().getTime();
 
+  // blocklyDiv handle Ctrl-s
+  document.addEventListener('keydown', function(e){
+    if (vm.tab != 'blocklyDiv' && vm.tab != 'pythonDiv') {
+      return;
+    }
+    if (e.ctrlKey && e.key == 's') {
+      vm.saveWorkspace();
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
   // listen resize event
   function onResize(){
     vm.layout.width = $('#main-content').width()+30; // with margin 15+15
