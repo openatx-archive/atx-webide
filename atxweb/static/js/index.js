@@ -649,8 +649,10 @@ $(function(){
   window.blocklyCropImageList = null;
   Blockly.Python.addReservedWords('highlight_block');
   goog.asserts.ENABLE_ASSERTS = true;
-  workspace = Blockly.inject(document.getElementById('blocklyDiv'),
-                    {toolbox: document.getElementById('toolbox')});
+  workspace = Blockly.inject(document.getElementById('blocklyDiv'), {
+    toolbox: document.getElementById('toolbox'),
+    media: '/static/blockly/media/',
+  });
 
   var screenURL = '/images/screenshot?v=t' + new Date().getTime();
 
