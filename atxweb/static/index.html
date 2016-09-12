@@ -34,7 +34,7 @@
             <li v-bind:class="{'active': tab=='pythonExtDiv'}"><a @click="switchTab('pythonExtDiv')">Exts</a></li>
             <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
             <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
-              <li v-if="blockly.selected" class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>运行该行</a></li>
+              <li v-if="blockly.selected" class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>运行选中</a></li>
               <li v-if="blockly.running" class="pull-right" @click="stopBlockly"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
               <li v-else class="pull-right" @click="runBlockly" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
               <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
@@ -140,8 +140,6 @@
         <block type="atx_start_app"></block>
         <block type="atx_stop_app"></block>
         <block type="atx_delay"></block>
-        <block type="atx_keep_screen"></block>
-        <block type="atx_free_screen"></block>
         <block type="atx_click"></block>
         <block type="atx_swipe"></block>
         <block type="atx_screenshot">
@@ -151,45 +149,33 @@
             </block>
           </value>
         </block>
+        <block type="atx_keep_screen"></block>
+        <block type="atx_free_screen"></block>
+        <block type="atx_blank"></block>
+      </category>
+      <category name="ATX图片" colour="160">
         <block type="atx_click_image">
-          <value name="ATX_PATTERN">
-            <block type="atx_image_file">
-            </block>
-          </value>
-        </block>
-        <block type="atx_click_image">
-          <value name="ATX_PATTERN">
-            <block type="atx_image_pattern">
-              <value name="FILENAME">
-                <block type="atx_image_file"></block>
-              </value>
-            </block>
-          </value>
-        </block>
-        <block type="atx_click_image">
-          <value name="ATX_PATTERN">
-            <block type="atx_image_pattern_offset">
-              <value name="FILENAME">
-                <block type="atx_image_crop_preview">
-                  <value name="IMAGE_CROP">
-                    <block type="atx_image_crop"></block>
-                  </value>
-                </block>
-              </value>
-            </block>
-          </value>
         </block>
         <block type="atx_wait">
-          <value name="ATX_PATTERN">
-            <block type="atx_image_file"></block>
-          </value>
         </block>
         <block type="atx_exists">
-          <value name="ATX_PATTERN">
+        </block>
+        <block type="atx_image_file">
+        </block>
+        <block type="atx_image_pattern">
+          <value name="FILENAME">
             <block type="atx_image_file"></block>
           </value>
         </block>
-        <block type="atx_blank"></block>
+        <block type="atx_image_pattern_offset">
+          <value name="FILENAME">
+            <block type="atx_image_crop_preview">
+              <value name="IMAGE_CROP">
+                <block type="atx_image_crop"></block>
+              </value>
+            </block>
+          </value>
+        </block>
       </category>
       <category name="逻辑" colour="210">
         <block type="controls_if"></block>

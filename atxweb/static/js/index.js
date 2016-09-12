@@ -168,11 +168,13 @@ var vm = new Vue({
     },
     runBlocklyStep: function(){
       if (!this.blockly.selected) {return;}
+      var pyprefix = '#-*- encoding: utf-8 -*-\n\n';
       Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
       Blockly.Python.init(workspace);
       var blk = workspace.getBlockById(this.blockly.selected),
           func = Blockly.Python[blk.type],
-          code = func.call(blk, blk);
+          code = func.call(blk, blk),
+          code = pyprefix + code;
       Blockly.Python.finish(code);
       Blockly.Python.STATEMENT_PREFIX = '';
       this.blockly.running = true;
