@@ -173,6 +173,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             screenshots = []
             for name in imgs:
                 realpath = name.replace('\\', '/') # fix for windows
+                if realpath.startswith('./'):
+                    realpath = realpath[2:]
                 name = os.path.basename(name).split('@')[0]
                 if realpath.startswith('screenshots/'):
                     screenshots.append({'name':name, 'path':realpath})

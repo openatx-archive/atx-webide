@@ -64,10 +64,12 @@
               <div>
                 <pre id="python-man-editor" style="opacity:0"></pre>
               </div>
-              <div style="display:none;position:absolute; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
+              <div style="position:absolute; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
                 <ul class="clearfix">
                   <li v-for="img in images" style="float:left;margin-right:5px;">
-                    <div @click="replaceManualRowImage(img.name)"><img src="${img.path}" style="height:50px"><p>${img.name}</p></div>
+                    <div @click="replaceManualRowImage(img.name)" v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
+                      <img src="${img.path}" style="height:50px"><p>${img.name}</p>
+                    </div>
                   </li>
                 </ul>
               </div>

@@ -108,6 +108,7 @@ var vm = new Vue({
       vimmode: true,
       selected: null,
       running: false,
+      cursor: null,
       row_image: null,
     }
   },
@@ -291,7 +292,9 @@ var vm = new Vue({
       if (!filename){
         return;
       }
-      filename = filename + '.png';
+      if (filename.substr(-4, 4) != '.png') {
+        filename = filename + '.png';
+      }
       var self = this;
       $.ajax({
         url: '/images/screenshot',
@@ -471,9 +474,24 @@ var vm = new Vue({
         pymaneditor.setKeyboardHandler();
       }
     },
+    checkManualRowImage: function(text){
+        var regexp = /[^"]+\.png(?="|')/,
+            m = regexp.exec(text);
+        if (!m) {
+          this.manual.row_image = null;
+          return;
+        }
+        this.manual.row_image = m[0];
+        console.log('find image in line', m);
+    },
     replaceManualRowImage: function(name){
-      console.log('replace with', name);
-      if (!this.row_image) { return; }
+      if (!this.manual.row_image) { return; }
+      var row = this.manual.cursor.row;
+      var text = pymaneditor.session.getLine(row);
+      var regexp = /[^"]+\.png(?="|')/;
+      text = text.replace(regexp, name);
+      pymaneditor.session.doc.insertFullLines(row+1, [text]);
+      pymaneditor.session.doc.removeFullLines(row, row);
     },
   },
   watch: {
@@ -576,6 +594,14 @@ $(function(){
     pymaneditor.on('change', function(){
       vm.manual.dirty = true;
     });
+    // track cursor changes
+    pymaneditor.session.on('changeBackMarker', function(){
+      var cursor = pymaneditor.getCursorPosition();
+      if (vm.manual.cursor != null && vm.manual.cursor.row != cursor.row){
+        vm.checkManualRowImage(pymaneditor.session.getLine(cursor.row));
+      }
+      vm.manual.cursor = cursor;
+    })
   }
 
   function restoreExtension() {
