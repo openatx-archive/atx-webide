@@ -233,6 +233,25 @@ class ExtensionHandler(tornado.web.RequestHandler):
         python_text = self.get_argument('python_text')
         write_file('ext.py', python_text)
 
+class ManualCodeHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        ret = {}
+        default = '\n'.join([
+            '# -*- encoding: utf-8 -*-',
+            '#',
+            '# Created on: %s\n\n' % time.ctime(),
+        ])
+        ret['man_text'] = read_file('manual.py', default=default)
+        if not os.path.isfile('manual.py'):
+            write_file('manual.py', default)
+        self.write(ret)
+
+    def post(self):
+        log.info('Save manual code')
+        python_text = self.get_argument('python_text')
+        write_file('manual.py', python_text)
+
 class ScreenshotHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -318,6 +337,7 @@ def make_app(settings={}):
         (r'/ws', DebugWebSocket), # code debug
         (r"/workspace", WorkspaceHandler), # save and write workspace
         (r"/extension", ExtensionHandler), # save and write py ext
+        (r"/manual_code", ManualCodeHandler), # save and write py code
         (r"/images/screenshot", ScreenshotHandler),
         (r'/api/images', ImageHandler),
         (r'/device', DeviceHandler),

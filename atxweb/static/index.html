@@ -32,6 +32,7 @@
             <li v-bind:class="{'active': tab=='blocklyDiv'}"><a @click="switchTab('blocklyDiv')">Blockly</a></li>
             <li v-bind:class="{'active': tab=='pythonDiv'}"><a @click="switchTab('pythonDiv')">Python</a></li>
             <li v-bind:class="{'active': tab=='pythonExtDiv'}"><a @click="switchTab('pythonExtDiv')">Exts</a></li>
+            <li v-bind:class="{'active': tab=='pythonManualDiv'}"><a @click="switchTab('pythonManualDiv')">Coding</a></li>
             <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
             <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
               <li v-if="blockly.selected" class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>运行选中</a></li>
@@ -43,6 +44,13 @@
               <li class="pull-right" @click="savePyExtension"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
               <li class="pull-right" @click='toggleExtVimMode'><a>VimMode: ${ ext.vimmode ? 'ON' : 'OFF'}</a></li>
             </template>
+            <template v-if="tab=='pythonManualDiv'">
+              <li v-if="manual.selected" class="pull-right" @click="runPyManualCodeSelected" ><a><span class="glyphicon glyphicon-step-forward"></span>运行选中</a></li>
+              <li v-if="manual.running" class="pull-right" @click="stopPyManualCode"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
+              <li v-else class="pull-right" @click="runPyManualCode" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
+              <li class="pull-right" @click="savePyManualCode"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
+              <li class="pull-right" @click='toggleManualVimMode'><a>VimMode: ${ manual.vimmode ? 'ON' : 'OFF'}</a></li>
+            </template>
           </ul>
           <div class="tab-content" >
             <div id="blocklyDiv" v-bind:class="{'active': tab=='blocklyDiv'}" class="tab-pane"></div>
@@ -51,6 +59,18 @@
             </div>
             <div id="pythonExtDiv" v-bind:class="{'active': tab=='pythonExtDiv'}" class="tab-pane clearfix">
               <pre id="python-ext-editor" style="opacity:0"></pre>
+            </div>
+            <div id="pythonManualDiv" v-bind:class="{'active': tab=='pythonManualDiv'}" class="tab-pane" style="position:relative">
+              <div>
+                <pre id="python-man-editor" style="opacity:0"></pre>
+              </div>
+              <div style="display:none;position:absolute; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
+                <ul class="clearfix">
+                  <li v-for="img in images" style="float:left;margin-right:5px;">
+                    <div @click="replaceManualRowImage(img.name)"><img src="${img.path}" style="height:50px"><p>${img.name}</p></div>
+                  </li>
+                </ul>
+              </div>
             </div>
             <div id="imagesDiv" v-bind:class="{'active': tab=='imagesDiv'}" class="tab-pane">
               <ul class="clearfix">

@@ -102,6 +102,14 @@ var vm = new Vue({
       pythonText: '',
       vimmode: true,
     },
+    manual: {
+      dirty: false,
+      pythonText: '',
+      vimmode: true,
+      selected: null,
+      running: false,
+      row_image: null,
+    }
   },
   computed: {
     canvas_width: function() {
@@ -427,6 +435,46 @@ var vm = new Vue({
         pyexteditor.setKeyboardHandler();
       }
     },
+    runPyManualCode: function(){
+      if (this.manual.dirty) { this.savePyManualCode(); }
+      ws.send(JSON.stringify({command: "run", code:this.manual.pythonText}));
+    },
+    runPyManualCodeSelected: function(){
+      notify('Not Implemented yet.', 'error');
+    },
+    stopPyManualCode: function(){
+      notify('Not Implemented yet.', 'error');
+    },
+    savePyManualCode: function(){
+      if (!pymaneditor) {return;}
+      this.manual.pythonText = pymaneditor.getValue();
+      var self = this;
+      $.ajax({
+        url: '/manual_code',
+        method: 'POST',
+        data: {'python_text': self.manual.pythonText},
+        success: function(data){
+          notify('Code保存成功', 'success');
+          self.manual.dirty = false;
+        },
+        error: function(e){
+          console.log('Code保存失败:', e);
+          notify(e.responseTman || 'Code保存失败，请检查服务器连接是否正常', 'warn');
+        },
+      });
+    },
+    toggleManualVimMode: function(){
+      this.manual.vimmode = !this.manual.vimmode;
+      if (this.manual.vimmode) {
+        pymaneditor.setKeyboardHandler('ace/keyboard/vim');
+      } else {
+        pymaneditor.setKeyboardHandler();
+      }
+    },
+    replaceManualRowImage: function(name){
+      console.log('replace with', name);
+      if (!this.row_image) { return; }
+    },
   },
   watch: {
     'tab': function(newVal, oldVal) {
@@ -451,6 +499,7 @@ var ws;
 /* ace code editor */
 var pyviewer;
 var pyexteditor;
+var pyraweditor;
 
 /* init */
 $(function(){
@@ -485,11 +534,13 @@ $(function(){
     });
     // handle Vim write
     ace.config.loadModule('ace/keyboard/vim', function(module){
-      module.Vim.defineEx('write', 'w', function() {
-        console.log(':write triggered');
-        vm.savePyExtension();
+      module.Vim.defineEx('write', 'w', function(cm, params) {
+        if (cm.ace == pyexteditor) {
+          vm.savePyExtension();
+        } else if (cm.ace == pymaneditor) {
+          vm.savePyManualCode();
+        }
       });
-      pyexteditor.setKeyboardHandler('ace/keyboard/vim');
     });
     // handle Ctrl-S
     pyexteditor.commands.addCommand({
@@ -500,6 +551,30 @@ $(function(){
     // set data dirty flag
     pyexteditor.on('change', function(){
       vm.ext.dirty = true;
+    });
+    // in pythonManualDiv
+    pymaneditor = ace.edit('python-man-editor');
+    pymaneditor.container.style.opacity = "";
+    pymaneditor.$blockScrolling = Infinity;
+    pymaneditor.renderer.setScrollMargin(10, 10, 10, 10);
+    pymaneditor.getSession().setMode('ace/mode/python');
+    pymaneditor.setOptions({
+      minLines: 20,
+      maxLines: 40,
+      fontSize: 14,
+      newLineMode: 'unix',
+      theme: 'ace/theme/monokai',
+      keyboardHandler: 'ace/keyboard/vim',
+    });
+    // handle Ctrl-S
+    pymaneditor.commands.addCommand({
+      name: 'savePyManualCode',
+      bindKey: {win:'Ctrl-s', mac:'Command-s'},
+      exec: function(editor) { vm.savePyManualCode(); },
+    });
+    // set data dirty flag
+    pymaneditor.on('change', function(){
+      vm.manual.dirty = true;
     });
   }
 
@@ -567,6 +642,18 @@ $(function(){
       })
   }
 
+  function restoreManualCode() {
+    $.get('/manual_code')
+      .success(function(res){
+        vm.manual.pythonText = res.man_text;
+        pymaneditor.setValue(res.man_text);
+        pymaneditor.clearSelection();
+      })
+      .error(function(res){
+        alert(res.responseText);
+      })
+  }
+
   function connectWebsocket(){
     ws = new WebSocket('ws://'+location.host+'/ws')
 
@@ -574,6 +661,7 @@ $(function(){
       ws.send(JSON.stringify({command: "refresh"}))
       notify('与后台通信连接成功!!!');
       restoreExtension();
+      restoreManualCode();
     };
     ws.onmessage = function(evt){
       try {
@@ -602,6 +690,7 @@ $(function(){
         case 'run':
           if (data.status == 'ready') {
             vm.blockly.running = false;
+            vm.manual.running = false;
           }
           if (data.notify) {notify(data.notify);}
           break;
