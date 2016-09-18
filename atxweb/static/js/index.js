@@ -492,6 +492,7 @@ var vm = new Vue({
       text = text.replace(regexp, name);
       pymaneditor.session.doc.insertFullLines(row+1, [text]);
       pymaneditor.session.doc.removeFullLines(row, row);
+      this.manual.row_image = name;
     },
   },
   watch: {
@@ -601,7 +602,60 @@ $(function(){
         vm.checkManualRowImage(pymaneditor.session.getLine(cursor.row));
       }
       vm.manual.cursor = cursor;
-    })
+    });
+    // handle autocompletion
+    ace.config.loadModule('ace/ext/language_tools', function(module){
+      var AutoComplete = require('ace/autocomplete').Autocomplete;
+      var util = require('ace/autocomplete/util');
+      var imgnameCompleter = {
+        getCompletions: function(editor, session, pos, prefix, callback) {
+          console.log(123, pos, prefix);
+          callback(null, vm.images.map(function(img){
+            return { value: '"'+img.name+'"', score: 1, meta: 'image'};
+            })
+          );
+        }
+      };
+      pymaneditor.completers = [imgnameCompleter, module.keyWordCompleter, module.textCompleter];
+      // static autocomplete
+      pymaneditor.commands.addCommand({
+        name: 'atxAutoCompletion',
+        bindKey: 'Shift-Tab',
+        exec: function(editor) {
+          if (!editor.completer) {
+            editor.completer = new AutoComplete();
+          }
+          editor.completer.autoInsert = false;
+          editor.completer.autoSelect = true;
+          editor.completer.showPopup(editor);
+          editor.completer.cancelContextMenu();
+        },
+      });
+      // // live autocomplete, taken from 'ace/ext/language_tools.js'
+      // pymaneditor.commands.on('afterexec', function(e){
+      //   var editor = e.editor;
+      //   var hascompleter = editor.completer && editor.completer.activated;
+      //   // we don't want to autocomplete with no prefix
+      //   if (e.command.name === "backspace") {
+      //       if (hascompleter && !util.getcompletionprefix(editor))
+      //           editor.completer.detach();
+      //   }
+      //   else if (e.command.name === "insertstring") {
+      //       var prefix = util.getcompletionprefix(editor);
+      //       console.log(111, 'insertstring', prefix);
+      //       // only autocomplete if there's a prefix that can be matched
+      //       if (prefix && !hascompleter) {
+      //           if (!editor.completer) {
+      //               // create new autocompleter
+      //               editor.completer = new autocomplete();
+      //           }
+      //           // disable autoinsert
+      //           editor.completer.autoinsert = false;
+      //           editor.completer.showpopup(editor);
+      //       }
+      //   }
+      // });
+    }); // loadModule done: language_tools
   }
 
   function restoreExtension() {
