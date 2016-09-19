@@ -482,7 +482,6 @@ var vm = new Vue({
           return;
         }
         this.manual.row_image = m[0];
-        console.log('find image in line', m);
     },
     replaceManualRowImage: function(name){
       if (!this.manual.row_image) { return; }
@@ -605,56 +604,85 @@ $(function(){
     });
     // handle autocompletion
     ace.config.loadModule('ace/ext/language_tools', function(module){
-      var AutoComplete = require('ace/autocomplete').Autocomplete;
+      var Autocomplete = require('ace/autocomplete').Autocomplete;
       var util = require('ace/autocomplete/util');
-      var imgnameCompleter = {
-        getCompletions: function(editor, session, pos, prefix, callback) {
-          console.log(123, pos, prefix);
-          callback(null, vm.images.map(function(img){
-            return { value: '"'+img.name+'"', score: 1, meta: 'image'};
+      // TODO: complete d.xxx
+      var keywords = ['start_app', 'stop_app', 'delay', 'click', 'swipe',
+          'keep_screen', 'free_screen', 'screen_shot', 'click_image', 'wait',
+          'exists'];
+      var atxKeywordCompleter = {
+        getCompletions: function(editor, session, pos, prefix, callback){
+          var token = session.getTokenAt(pos.row, pos.column);
+          if (!token || token.value != '.') {
+            callback(true); // callback with err=true
+            return;
+          }
+          var line = editor.session.getLine(pos.row);
+          var prefix = util.retrievePrecedingIdentifier(line, pos.column-1);
+          if (prefix !== 'd') {
+            callback(true);
+            return;
+          }
+          callback(null, keywords.map(function(word){
+              return {value: word, score: 1, meta: 'atx'};
             })
           );
         }
       };
-      pymaneditor.completers = [imgnameCompleter, module.keyWordCompleter, module.textCompleter];
-      // static autocomplete
-      pymaneditor.commands.addCommand({
-        name: 'atxAutoCompletion',
-        bindKey: 'Shift-Tab',
-        exec: function(editor) {
-          if (!editor.completer) {
-            editor.completer = new AutoComplete();
+      // TODO: complete click_image(, exists(
+      var imgnameCompleter = {
+        getCompletions: function(editor, session, pos, prefix, callback) {
+          var token = session.getTokenAt(pos.row, pos.column);
+          if (!token || token.value != '(') {
+            callback(true); // callback with err=true
+            return;
           }
-          editor.completer.autoInsert = false;
-          editor.completer.autoSelect = true;
-          editor.completer.showPopup(editor);
-          editor.completer.cancelContextMenu();
-        },
-      });
-      // // live autocomplete, taken from 'ace/ext/language_tools.js'
-      // pymaneditor.commands.on('afterexec', function(e){
-      //   var editor = e.editor;
-      //   var hascompleter = editor.completer && editor.completer.activated;
-      //   // we don't want to autocomplete with no prefix
-      //   if (e.command.name === "backspace") {
-      //       if (hascompleter && !util.getcompletionprefix(editor))
-      //           editor.completer.detach();
-      //   }
-      //   else if (e.command.name === "insertstring") {
-      //       var prefix = util.getcompletionprefix(editor);
-      //       console.log(111, 'insertstring', prefix);
-      //       // only autocomplete if there's a prefix that can be matched
-      //       if (prefix && !hascompleter) {
-      //           if (!editor.completer) {
-      //               // create new autocompleter
-      //               editor.completer = new autocomplete();
-      //           }
-      //           // disable autoinsert
-      //           editor.completer.autoinsert = false;
-      //           editor.completer.showpopup(editor);
-      //       }
-      //   }
+          var line = editor.session.getLine(pos.row);
+          var prefix = util.retrievePrecedingIdentifier(line, pos.column-1);
+          if (!prefix.match(/click_image|exists|match|screen_shot|wait/)) {
+            callback(true);
+            return;
+          }
+          callback(null, vm.images.map(function(img){
+              return { value: '"'+img.name+'"', score: 1, meta: 'image'};
+            })
+          );
+        }
+      };
+      pymaneditor.completers = [atxKeywordCompleter, imgnameCompleter];
+      // // static autocomplete
+      // pymaneditor.commands.addCommand({
+      //   name: 'atxAutoCompletion',
+      //   bindKey: 'Shift-Tab',
+      //   exec: function(editor) {
+      //     if (!editor.completer) {
+      //       editor.completer = new Autocomplete();
+      //     }
+      //     editor.completer.autoInsert = false;
+      //     editor.completer.autoSelect = true;
+      //     editor.completer.showPopup(editor);
+      //     editor.completer.cancelContextMenu();
+      //   },
       // });
+      // live autocomplete
+      pymaneditor.commands.on('afterExec', function(e){
+        var editor = e.editor;
+        if (!editor.completer) {
+          editor.completer = new Autocomplete();
+        }
+        // We don't want to autocomplete with no prefix
+        if (e.command.name === "backspace") {
+          if (editor.completer.activated && !util.getCompletionPrefix(editor)) {
+              editor.completer.detach();
+          }
+        }
+        else if (e.command.name === "insertstring") {
+          if (!editor.completer.activated) {
+            editor.completer.autoInsert = false;
+            editor.completer.showPopup(editor);
+          }
+        }
+      });
     }); // loadModule done: language_tools
   }
 
