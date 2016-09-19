@@ -289,8 +289,12 @@ class DeviceHandler(tornado.web.RequestHandler):
     def get(self):
         '''get device list'''
         global device
-        d = AdbClient().devices().keys()
-        print 'android device list:', d
+        try:
+            d = AdbClient().devices().keys()
+            print 'android device list:', d
+        except EnvironmentError as e:
+            print 'ERROR:', str(e)
+            d = []
         self.write({'android':d, 'ios':[], 'serial':device and device.serial})
 
     def post(self):
