@@ -110,6 +110,7 @@ var vm = new Vue({
       running: false,
       cursor: null,
       row_image: null,
+      usedimages: null,
     }
   },
   computed: {
@@ -134,6 +135,7 @@ var vm = new Vue({
       if (this.tab == 'blocklyDiv' && this.blockly.dirty) {this.saveWorkspace();}
       if (this.tab == 'pythonExtDiv' && this.ext.dirty) {this.savePyExtension();}
       if (which == 'pythonExtDiv' && pyexteditor) {pyexteditor.focus();}
+      if (which == 'pythonManualDiv' && pymaneditor) {pymaneditor.focus();}
       this.tab = which;
     },
     generateCode: function(){
@@ -493,6 +495,20 @@ var vm = new Vue({
       pymaneditor.session.doc.removeFullLines(row, row);
       this.manual.row_image = name;
     },
+    updateManualImageCursor: function(){
+      var regexp = /[^"]+\.png(?="|')/;
+      var lines = pymaneditor.session.doc.getAllLines();
+      var usedimages = {};
+      for (var i = 0, line; i < lines.length; i++) {
+        line = lines[i];
+        m = regexp.exec(line);
+        if (m) {
+          if (!usedimages[m[0]]) { usedimages[m[0]] = [];}
+          usedimages[m[0]].push({row:i, column:m.index});
+        }
+      }
+      this.manual.usedimages = usedimages;
+    },
   },
   watch: {
     'tab': function(newVal, oldVal) {
@@ -517,7 +533,7 @@ var ws;
 /* ace code editor */
 var pyviewer;
 var pyexteditor;
-var pyraweditor;
+var pymaneditor;
 
 /* init */
 $(function(){
@@ -591,8 +607,11 @@ $(function(){
       exec: function(editor) { vm.savePyManualCode(); },
     });
     // set data dirty flag
-    pymaneditor.on('change', function(){
+    pymaneditor.on('change', function(e){
       vm.manual.dirty = true;
+      if (e.start.row != e.end.row) {
+        vm.updateManualImageCursor();
+      }
     });
     // track cursor changes
     pymaneditor.session.on('changeBackMarker', function(){
