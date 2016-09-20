@@ -75,7 +75,7 @@ var vm = new Vue({
     layout: {
       width: 1, //document.documentElement.clientWidth,
       height: 1, //document.documentElement.clientHeight,
-      right_portion: 30, // max: 55, min: 25
+      right_portion: 25, // max: 55, min: 25
       screen_ratio: 1.75, // screen height/width
       screen_scale: 0.4, // canvas width / screen width
     },
@@ -330,6 +330,13 @@ var vm = new Vue({
           notify('图片保存失败，打开调试窗口查看具体问题', 'error');
         },
       });
+    },
+    saveScreenCropRightClick: function(evt){
+      if (this.device.latest_screen == '' || this.overlays.crop_bounds.bound === null) {
+        return;
+      }
+      evt.preventDefault()
+      this.saveScreenCrop();
     },
     savePyExtension: function(){
       if (!pyexteditor) {return;}
@@ -1021,6 +1028,8 @@ $(function(){
   // });
 
   canvas.addEventListener('mousedown', function(evt){
+    // ignore right click
+    if (evt.button == 2) {return;}
     var blk = Blockly.selected;
     if (blk !== null) {
       return;
@@ -1091,6 +1100,17 @@ $(function(){
     }
     crop_bounds.start = null;
     crop_rect_bounds.start = null;
+  });
+  // click to clean
+  canvas.addEventListener('click', function(evt){
+    var blk = Blockly.selected;
+    if (blk !== null || crop_bounds.start !== null || crop_bounds.end !== null) {
+      return;
+    }
+    crop_bounds.bound = null;
+    vm.overlays.crop_bounds.bound = null;
+    $('#screen-crop').css({'left':'0px', 'top':'0px',
+        'width':'0px', 'height':'0px'}).show();
   });
 
   // -------- selected is atx_click ----------

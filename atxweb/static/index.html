@@ -72,6 +72,7 @@
                     </div>
                   </li>
                 </ul>
+                <hr/>
                 <ul class="clearfix">
                   <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img.name)" style="float:left;margin-right:5px;">
                     <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
@@ -143,7 +144,7 @@
             </div> <!-- #screen-overlays -->
             <div id="screen-crop" class="image-crop"></div>
             <div id="screen-crop-rect" class="image-crop"></div>
-            <canvas id="canvas">
+            <canvas id="canvas" @contextmenu="saveScreenCropRightClick">
               Browser not support canvas
             </canvas>
           </div> <!-- #screen-wrapper -->
