@@ -111,6 +111,11 @@ var vm = new Vue({
       cursor: null,
       row_image: null,
       usedimages: null,
+      contextmenu: {
+        left: 0,
+        top: 0,
+        img: null,
+      },
     }
   },
   computed: {
@@ -485,16 +490,6 @@ var vm = new Vue({
         }
         this.manual.row_image = m[0];
     },
-    replaceManualRowImage: function(name){
-      if (!this.manual.row_image) { return; }
-      var row = this.manual.cursor.row;
-      var text = pymaneditor.session.getLine(row);
-      var regexp = /[^"]+\.png(?="|')/;
-      text = text.replace(regexp, name);
-      pymaneditor.session.doc.insertFullLines(row+1, [text]);
-      pymaneditor.session.doc.removeFullLines(row, row);
-      this.manual.row_image = name;
-    },
     updateManualImageCursor: function(){
       var regexp = /[^"]+\.png(?="|')/;
       var lines = pymaneditor.session.doc.getAllLines();
@@ -509,6 +504,35 @@ var vm = new Vue({
       }
       this.manual.usedimages = usedimages;
     },
+    showContextMenu: function(evt, img) {
+      this.manual.contextmenu.img = img;
+      this.manual.contextmenu.left = evt.clientX + 2;
+      this.manual.contextmenu.top = evt.clientY + 2;
+    },
+    hideContextMenu: function(){
+      this.manual.contextmenu.img = null;
+    },
+    onMenuDelete: function() {
+      if (!this.manual.contextmenu.img) {return;}
+      notify('还没实现:(', 'warn')
+      this.manual.contextmenu.img = null;
+    },
+    onMenuInsertClickImage: function(){
+      if (!this.manual.contextmenu.img) {return;}
+      notify('还没实现:(', 'warn')
+      this.manual.contextmenu.img = null;
+    },
+    onMenuReplaceRowImage: function(){
+      if (!this.manual.contextmenu.img || !this.manual.row_image) {return;}
+      var row = this.manual.cursor.row;
+      var text = pymaneditor.session.getLine(row);
+      var regexp = /[^"]+\.png(?="|')/;
+      text = text.replace(regexp, this.manual.contextmenu.img);
+      pymaneditor.session.doc.insertFullLines(row+1, [text]);
+      pymaneditor.session.doc.removeFullLines(row, row);
+      this.manual.row_image = this.manual.contextmenu.img;
+      this.manual.contextmenu.img = null;
+    }
   },
   watch: {
     'tab': function(newVal, oldVal) {

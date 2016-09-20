@@ -64,17 +64,17 @@
               <div>
                 <pre id="python-man-editor" style="opacity:0"></pre>
               </div>
-              <div style="position:absolute; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
+              <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
                 <ul class="clearfix">
-                  <li v-for="img in images" v-if="manual.usedimages[img.name]" style="float:left;margin-right:5px;">
-                    <div @click="replaceManualRowImage(img.name)" v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
+                  <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img.name)" style="float:left;margin-right:5px;">
+                    <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
                       <img src="${img.path}" style="height:50px"><p>${img.name}</p>
                     </div>
                   </li>
                 </ul>
                 <ul class="clearfix">
-                  <li v-for="img in images" v-if="!manual.usedimages[img.name]" style="float:left;margin-right:5px;">
-                    <div @click="replaceManualRowImage(img.name)" v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
+                  <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img.name)" style="float:left;margin-right:5px;">
+                    <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
                       <img src="${img.path}" style="height:50px"><p>${img.name}</p>
                     </div>
                   </li>
@@ -160,6 +160,13 @@
         </div>
       </div> <!-- col-md-12 -->
 
+      <div v-show="tab=='pythonManualDiv' && manual.contextmenu.img" style="position:absolute;display:none;" v-bind:style="{'display':manual.contextmenu.img!=null, 'left':manual.contextmenu.left+'px', 'top':manual.contextmenu.top+'px'}">
+        <ul class="dropdown-menu" style="display:block;">
+          <li v-bind:class="{'disabled':!manual.row_image}"><a @click="onMenuReplaceRowImage">替换本行图片</a></li>
+          <li><a @click="onMenuInsertClickImage">插入click_image</a></li>
+          <li><a @click="onMenuDelete">删除</a></li>
+        </ul>
+      </div>
 
     </div> <!-- #main-content -->
 
