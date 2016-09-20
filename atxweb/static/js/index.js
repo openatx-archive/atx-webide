@@ -6,6 +6,10 @@ function notify(message, className, position, autoHideDelay, element){
   $.notify(message, {className, position, autoHideDelay});
 }
 
+Vue.filter('imagename', function(text){
+  return text.replace(/(\.\d+x\d+)?\.png/, "");
+});
+
 Vue.component('tree-node', {
   template: '#tree-node-template',
   replace: true,
@@ -47,6 +51,7 @@ Vue.component('tree-node', {
     },
   }
 });
+
 
 /* Vue controls the layout */
 Vue.config.delimiters = ['${', '}'];
@@ -299,9 +304,10 @@ var vm = new Vue({
       if (!filename){
         return;
       }
-      if (filename.substr(-4, 4) != '.png') {
-        filename = filename + '.png';
+      if (filename.substr(-4, 4) == '.png') {
+        filename = filename.substr(0, filename.length-4);
       }
+      filename = filename+'.'+this.screen.width+'x'+this.screen.height+'.png';
       var self = this;
       $.ajax({
         url: '/images/screenshot',
