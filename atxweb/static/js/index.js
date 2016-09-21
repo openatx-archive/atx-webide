@@ -527,12 +527,19 @@ var vm = new Vue({
     },
     onMenuDelete: function() {
       if (!this.manual.contextmenu.img) {return;}
-      notify('还没实现:(', 'warn')
+      notify('还没实现:(', 'warn');
       this.manual.contextmenu.img = null;
     },
     onMenuInsertClickImage: function(){
       if (!this.manual.contextmenu.img) {return;}
-      notify('还没实现:(', 'warn')
+      var cursor = pymaneditor.getCursorPosition();
+      var line = pymaneditor.session.getLine(cursor.row);
+      var script = 'd.click_image(u"'+ this.manual.contextmenu.img +'")\n';
+      if (line !== '') {
+        cursor = {row: cursor.row+1, column:0};
+      }
+      pymaneditor.session.insert(cursor, script);
+      pymaneditor.navigateTo(cursor.row, 0);
       this.manual.contextmenu.img = null;
     },
     onMenuReplaceRowImage: function(){
