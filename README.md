@@ -9,7 +9,7 @@ Web-based visual editor for generating atx testcase.
 ## Installation
 using pip:
 ```
-$ pip install atx-webide
+$ pip install -U atx-webide
 ```
 
 or clone this repository and run:
@@ -38,14 +38,9 @@ It will start the server and open the web browser. Just do as follows:
 Have Fun!
 
 ## Todo
-- [x] track history screens.
-- [x] select device from web
-- [x] add atx_start_app & atx_stop_app
-- [x] add resize handle, fix #1
-- [x] step runner
 - [ ] control device from web
 - [ ] auto update screen image (dynamic interval)
-- [ ] add ext scripts
+- [ ] canvas size fit
 
 ## Refs
 1. [ATX (AutomatorX)](https://github.com/codeskyblue/AutomatorX)

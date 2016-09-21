@@ -66,7 +66,7 @@
               </div>
               <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
                 <ul class="clearfix">
-                  <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img.name)" style="float:left;margin-right:5px;">
+                  <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
                     <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
                       <img src="${img.path}" style="height:50px"><p>${img.name | imagename}</p>
                     </div>
@@ -74,7 +74,7 @@
                 </ul>
                 <hr/>
                 <ul class="clearfix">
-                  <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img.name)" style="float:left;margin-right:5px;">
+                  <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
                     <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
                       <img src="${img.path}" style="height:50px"><p>${img.name | imagename}</p>
                     </div>

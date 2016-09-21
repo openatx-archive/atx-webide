@@ -527,14 +527,47 @@ var vm = new Vue({
     },
     onMenuDelete: function() {
       if (!this.manual.contextmenu.img) {return;}
-      notify('还没实现:(', 'warn');
+      var name = this.manual.contextmenu.img.name;
+      if (this.manual.usedimages[name]) {
+        notify('图片已被使用，无法删除！');
+        this.manual.contextmenu.img = null;
+        return;
+      }
+      var prefix = window.blocklyBaseURL.length;
+      var imgpath = this.manual.contextmenu.img.path.substr(prefix);
+      var idx = this.images.indexOf(this.manual.contextmenu.img);
+      // locate idx in blocklyImageList
+      for (var i = 0, info, blkidx=-1; i < window.blocklyImageList.length; i++) {
+        info = window.blocklyImageList[i];
+        if (info[1] == imgpath) {
+          blkidx = i;
+          break
+        }
+      }
+      var self = this;
+      $.ajax({
+        url: '/api/images',
+        method: 'DELETE',
+        data: {'imgpath': imgpath},
+        success: function(data){
+          self.images.splice(idx, 1);
+          if (blkidx != -1) {
+            window.blocklyImageList.splice(blkidx, 1);
+          }
+          notify('删除成功', 'success');
+        },
+        error: function(e){
+          console.log('删除失败:\n', e);
+          notify(e.responseText || '删除失败，请检查服务器连接是否正常', 'warn');
+        },
+      });
       this.manual.contextmenu.img = null;
     },
     onMenuInsertClickImage: function(){
       if (!this.manual.contextmenu.img) {return;}
       var cursor = pymaneditor.getCursorPosition();
       var line = pymaneditor.session.getLine(cursor.row);
-      var script = 'd.click_image(u"'+ this.manual.contextmenu.img +'")\n';
+      var script = 'd.click_image(u"'+ this.manual.contextmenu.img.name +'")\n';
       if (line !== '') {
         cursor = {row: cursor.row+1, column:0};
       }
@@ -547,10 +580,11 @@ var vm = new Vue({
       var row = this.manual.cursor.row;
       var text = pymaneditor.session.getLine(row);
       var regexp = /[^"]+\.png(?="|')/;
-      text = text.replace(regexp, this.manual.contextmenu.img);
+      var name = this.manual.contextmenu.img.name;
+      text = text.replace(regexp, name);
       pymaneditor.session.doc.insertFullLines(row+1, [text]);
       pymaneditor.session.doc.removeFullLines(row, row);
-      this.manual.row_image = this.manual.contextmenu.img;
+      this.manual.row_image = name;
       this.manual.contextmenu.img = null;
     }
   },

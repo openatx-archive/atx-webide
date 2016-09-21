@@ -87,6 +87,16 @@ class ImageHandler(tornado.web.RequestHandler):
             'baseURL': self.request.protocol + '://' + self.request.host+'/static_imgs/'
         })
 
+    def delete(self):
+        imgpath = self.get_argument('imgpath')
+        imgpath = os.path.abspath(os.path.join('.', imgpath))
+        try:
+            os.remove(imgpath)
+            print 'deleted', imgpath
+        except (IOError, WindowsError):
+            self.set_status(404)
+            self.write('Image (%s) Not Found' % imgpath)
+            self.finish()
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
