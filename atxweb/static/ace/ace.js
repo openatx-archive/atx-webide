@@ -1941,6 +1941,7 @@ var dom = require("../lib/dom");
 var lang = require("../lib/lang");
 var BROKEN_SETDATA = useragent.isChrome < 18;
 var USE_IE_MIME_TYPE =  useragent.isIE;
+var CHROME_COMPOSITION = useragent.isChrome >= 53;
 
 var TextInput = function(parentNode, host) {
     var text = dom.createElement("textarea");
@@ -2298,6 +2299,9 @@ var TextInput = function(parentNode, host) {
         host.removeListener("mousedown", onCompositionEnd);
         if (e.type == "compositionend" && c.range) {
             host.selection.setRange(c.range);
+        }
+        if (CHROME_COMPOSITION) {
+            onInput();
         }
     };
     
