@@ -1,3 +1,2 @@
-atx>=1.0.13
 tornado==4.3
 futures==3.0.5

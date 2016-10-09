@@ -19,7 +19,12 @@ import tornado.websocket
 from tornado.concurrent import run_on_executor
 from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for python2
 
-import atx
+try:
+    import atx
+except:
+    print "AutomatorX not installed! Please run `pip install --upgrade atx`"
+    sys.exit(1)
+
 from atx import logutils
 from atx import imutils
 from atx import base
