@@ -37,11 +37,7 @@ It will start the server and open the web browser. Just do as follows:
 
 Have Fun!
 
-## Todo
-- [ ] control device from web
-- [ ] auto update screen image (dynamic interval)
-- [ ] canvas size fit
-
 ## Refs
 1. [ATX (AutomatorX)](https://github.com/codeskyblue/AutomatorX)
 2. [atx-blockly](https://github.com/openatx/blockly)
+3. [How to test BoomBeach with atx]https://testerhome.com/topics/5923
