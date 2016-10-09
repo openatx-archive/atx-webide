@@ -684,6 +684,12 @@ $(function(){
       bindKey: {win:'Ctrl-s', mac:'Command-s'},
       exec: function(editor) { vm.savePyManualCode(); },
     });
+    // handle Ctrl-g
+    pymaneditor.commands.addCommand({
+      name: 'runPyManualCode',
+      bindKey: {win:'Ctrl-g', mac:'Command-g'},
+      exec: function(editor) { vm.runPyManualCode(); },
+    });
     // set data dirty flag
     pymaneditor.on('change', function(e){
       vm.manual.dirty = true;
@@ -705,7 +711,7 @@ $(function(){
       var util = require('ace/autocomplete/util');
       // TODO: complete d.xxx
       var keywords = ['start_app', 'stop_app', 'delay', 'click', 'swipe',
-          'keep_screen', 'free_screen', 'screen_shot', 'click_image', 'wait',
+          'keep_screen', 'free_screen', 'screenshot', 'click_image', 'wait',
           'exists'];
       var atxKeywordCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback){
@@ -736,7 +742,7 @@ $(function(){
           }
           var line = editor.session.getLine(pos.row);
           var prefix = util.retrievePrecedingIdentifier(line, pos.column-1);
-          if (!prefix.match(/click_image|exists|match|screen_shot|wait/)) {
+          if (!prefix.match(/click_image|exists|match|wait/)) {
             callback(true);
             return;
           }
