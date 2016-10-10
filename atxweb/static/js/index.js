@@ -518,6 +518,7 @@ var vm = new Vue({
       this.manual.usedimages = usedimages;
     },
     showContextMenu: function(evt, img) {
+      this.manual.contextmenu.target = evt.target;
       this.manual.contextmenu.img = img;
       this.manual.contextmenu.left = evt.clientX + 2;
       this.manual.contextmenu.top = evt.clientY + 2;
@@ -585,6 +586,37 @@ var vm = new Vue({
       pymaneditor.session.doc.insertFullLines(row+1, [text]);
       pymaneditor.session.doc.removeFullLines(row, row);
       this.manual.row_image = name;
+      this.manual.contextmenu.img = null;
+    },
+    onMenuReplaceImage: function(){
+      var bound = this.overlays.crop_bounds.bound;
+      var img = this.manual.contextmenu.img;
+      var target = this.manual.contextmenu.target;
+      var w = this.screen.width, h = this.screen.height;
+      filename = img.name.replace(/(\.\d+x\d+)?\.png/, "");
+      filename = filename+'.'+Math.max(w, h)+'x'+Math.min(w, h)+'.png';
+      var self = this;
+      $.ajax({
+        url: '/images/screenshot',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          screenname: self.device.latest_screen,
+          filename: filename,
+          bound: bound,
+        },
+        success: function(res){
+          // console.log(res);
+          notify('已替换', 'success');
+          $('#screen-crop').css({'left':'0px', 'top':'0px','width':'0px', 'height':'0px'});
+          self.overlays.crop_bounds.bound = null;
+          target.src = img.path + "?t=" + new Date().getTime();
+        },
+        error: function(err){
+          console.log('替换失败:\n', err);
+          notify('图片替换失败，打开调试窗口查看具体问题', 'error');
+        },
+      });
       this.manual.contextmenu.img = null;
     }
   },
