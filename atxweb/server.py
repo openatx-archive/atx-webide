@@ -159,11 +159,14 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 print 'Program stopped'
                 return
             self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
+        except SystemExit:
+            pass
         except Exception as e:
             self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
         finally:
             self._run = False
             self.write_message({'type': 'run', 'status': 'ready'})
+            self.write_message({'type': 'console', 'output': '# '+time.strftime('%H:%M:%S') + ' stop running\n ------------------ \n'})
             sys.stdout = __sysout
 
     @run_on_executor
