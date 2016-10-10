@@ -128,6 +128,7 @@
                 <div v-else>
                   <p>请选择序列号</p>
                   <select v-model="android_serial" class="form-control">
+                    <option v-if="android_serial_choices.length==0" value="" disabled selected>No Device available!</option>
                     <option v-for="s in android_serial_choices">${s}</option>
                   </select>
                 </div>
