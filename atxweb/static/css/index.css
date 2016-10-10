@@ -1,5 +1,6 @@
 html, body{
   height: 100%;
+  overflow: hidden;
 }
 
 a {
@@ -15,6 +16,7 @@ li {
 
 #main-content {
   min-width: 1000px;
+  padding-top: 10px;
 }
 
 #left-panel, #right-panel {
