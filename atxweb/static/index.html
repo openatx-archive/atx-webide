@@ -35,7 +35,7 @@
             <li v-bind:class="{'active': tab=='pythonManualDiv'}"><a @click="switchTab('pythonManualDiv')">Coding</a></li>
             <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
             <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
-              <li v-if="blockly.selected" class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>运行选中</a></li>
+              <li v-if="blockly.selected" v-bind:class='{"disabled":blockly.running}' class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>运行选中</a></li>
               <li v-if="blockly.running" class="pull-right" @click="stopBlockly"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
               <li v-else class="pull-right" @click="runBlockly" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
               <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
@@ -45,7 +45,7 @@
               <li class="pull-right" @click='toggleExtVimMode'><a>VimMode: ${ ext.vimmode ? 'ON' : 'OFF'}</a></li>
             </template>
             <template v-if="tab=='pythonManualDiv'">
-              <li v-if="manual.selected" class="pull-right" @click="runPyManualCodeSelected" ><a><span class="glyphicon glyphicon-step-forward"></span>运行选中</a></li>
+              <li v-bind:class='{"disabled":manual.running}' class="pull-right" @click="runPyManualCodeToLine" ><a><span class="glyphicon glyphicon-step-forward"></span>运行到本行</a></li>
               <li v-if="manual.running" class="pull-right" @click="stopPyManualCode"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
               <li v-else class="pull-right" @click="runPyManualCode" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
               <li class="pull-right" @click="savePyManualCode"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>

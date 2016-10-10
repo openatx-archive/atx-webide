@@ -40,4 +40,4 @@ Have Fun!
 ## Refs
 1. [ATX (AutomatorX)](https://github.com/codeskyblue/AutomatorX)
 2. [atx-blockly](https://github.com/openatx/blockly)
-3. [How to test BoomBeach with atx]https://testerhome.com/topics/5923
+3. [How to test BoomBeach with atx (@testerhome)](https://testerhome.com/topics/5923)

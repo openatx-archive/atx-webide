@@ -460,7 +460,16 @@ var vm = new Vue({
     },
     runPyManualCode: function(){
       if (this.manual.dirty) { this.savePyManualCode(); }
+      this.manual.running = true;
       ws.send(JSON.stringify({command: "run", code:this.manual.pythonText}));
+    },
+    runPyManualCodeToLine: function(line){
+      var cursor = pymaneditor.getCursorPosition(),
+          lines = pymaneditor.session.doc.getLines(0, cursor.row),
+          char = pymaneditor.session.doc.getNewLineCharacter(),
+          code = lines.join(char);
+      this.manual.running = true;
+      ws.send(JSON.stringify({command: "run", code:code}));
     },
     runPyManualCodeSelected: function(){
       notify('Not Implemented yet.', 'error');
@@ -721,6 +730,12 @@ $(function(){
       name: 'runPyManualCode',
       bindKey: {win:'Ctrl-g', mac:'Command-g'},
       exec: function(editor) { vm.runPyManualCode(); },
+    });
+    // handle Ctrl-g
+    pymaneditor.commands.addCommand({
+      name: 'runPyManualCodeToLine',
+      bindKey: {win:'Ctrl-Shift-g', mac:'Command-Shift-g'},
+      exec: function(editor) { vm.runPyManualCodeToLine(); },
     });
     // set data dirty flag
     pymaneditor.on('change', function(e){
