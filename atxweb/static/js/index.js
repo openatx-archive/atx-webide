@@ -81,6 +81,7 @@ var vm = new Vue({
     },
     // screen
     screen: null,
+    autorefresh: null,
     refreshing: true, // should set to false after refreshScreen
     // blockly stuff
     blockly: {
@@ -270,6 +271,23 @@ var vm = new Vue({
           ws.send(JSON.stringify({command: "refresh"}));},
         function(){ notify('Refresh Failed.', 'error');}
       );
+    },
+    checkAutoRefreshScreen: function(evt){
+      notify('Not Implemented yet.', 'error');
+      return;
+      var self = this;
+      if (evt.target.checked) {
+        self.autorefresh = setInterval(function () {
+          var url = '/images/screenshot?v=t' + new Date().getTime();
+          console.log('get screen', url);
+          //self.loadScreen(url);
+        }, 300);
+      } else {
+        if (self.autorefresh != null) {
+          clearInterval(self.autorefresh);
+        }
+        self.autorefresh = null;
+      }
     },
     loadScreen: function(url, callback, errback){
       if (!url || (this.screen && url == this.screen.src)) {return;}
