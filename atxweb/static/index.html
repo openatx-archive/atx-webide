@@ -63,8 +63,13 @@
             <div id="pythonManualDiv" v-bind:class="{'active': tab=='pythonManualDiv'}" class="tab-pane" style="position:relative">
               <div>
                 <pre id="python-man-editor" style="opacity:0"></pre>
+                <p class="small text-muted">
+                  <b style="margin-right:3px">Save</b><i style="margin-right:8px">Ctrl-S</i>
+                  <b style="margin-right:3px">Run</b><i style="margin-right:8px">Ctrl-G</i>
+                  <b style="margin-right:3px">RunToLine</b><i style="margin-right:8px">Ctrl-Shift-G</i>
+                </p>
               </div>
-              <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
+              <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; overflow-y:auto; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
                 <ul class="clearfix">
                   <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
                     <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
