@@ -325,7 +325,8 @@ var vm = new Vue({
       if (filename.substr(-4, 4) == '.png') {
         filename = filename.substr(0, filename.length-4);
       }
-      filename = filename+'.'+this.screen.width+'x'+this.screen.height+'.png';
+      var w = this.screen.width, h = this.screen.height;
+      filename = filename+'.'+Math.max(w, h)+'x'+Math.min(w, h)+'.png';
       var self = this;
       $.ajax({
         url: '/images/screenshot',
