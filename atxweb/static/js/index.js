@@ -189,7 +189,7 @@ var vm = new Vue({
       ws.send(JSON.stringify({command: "run", code:this.blockly.pythonDebugText}));
     },
     runBlocklyStep: function(){
-      if (!this.blockly.selected) {return;}
+      if (!this.blockly.selected || this.blockly.running) {return;}
       var pyprefix = '#-*- encoding: utf-8 -*-\n\n';
       Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
       Blockly.Python.init(workspace);
@@ -483,6 +483,7 @@ var vm = new Vue({
       ws.send(JSON.stringify({command: "run", code:this.manual.pythonText}));
     },
     runPyManualCodeToLine: function(line){
+      if (this.manual.running) {return;}
       var cursor = pymaneditor.getCursorPosition(),
           lines = pymaneditor.session.doc.getLines(0, cursor.row),
           char = pymaneditor.session.doc.getNewLineCharacter(),
@@ -618,6 +619,7 @@ var vm = new Vue({
     },
     onMenuReplaceImage: function(){
       var bound = this.overlays.crop_bounds.bound;
+      if (!bound) {return;}
       var img = this.manual.contextmenu.img;
       var target = this.manual.contextmenu.target;
       var w = this.screen.width, h = this.screen.height;
