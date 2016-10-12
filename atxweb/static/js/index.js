@@ -273,15 +273,18 @@ var vm = new Vue({
       );
     },
     checkAutoRefreshScreen: function(evt){
-      notify('Not Implemented yet.', 'error');
-      return;
-      var self = this;
+      var self = this, interval = 3;
+      // ios need more time
+      if (this.device.platform == 'ios') {
+        interval = 5;
+      }
       if (evt.target.checked) {
+        notify('自动刷新频率为' +interval+ '秒', 'warn');
         self.autorefresh = setInterval(function () {
           var url = '/images/screenshot?v=t' + new Date().getTime();
           console.log('get screen', url);
-          //self.loadScreen(url);
-        }, 300);
+          self.loadScreen(url);
+        }, interval * 1000);
       } else {
         if (self.autorefresh != null) {
           clearInterval(self.autorefresh);
