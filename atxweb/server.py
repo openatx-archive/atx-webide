@@ -322,7 +322,7 @@ class DeviceHandler(tornado.web.RequestHandler):
 
         ## check if device is alive, should be in drivers?
         if device is not None:
-            if serial == device.serial:
+            if hasattr(device, 'serial') and serial == device.serial:
                 if device.serial.startswith('http://'):
                     self.write({'status': 'ok'})
                     return
@@ -439,6 +439,6 @@ if __name__ == '__main__':
             platform = 'ios'
         else:
             platform = 'android'
-        run(serial=serial, platform=platform)
+        run(serial, platform=platform)
     else:
         run()
