@@ -313,7 +313,7 @@ class DeviceHandler(tornado.web.RequestHandler):
         except EnvironmentError as e:
             print 'ERROR:', str(e)
             d = []
-        self.write({'android':d, 'ios':[], 'serial':device and device.serial})
+        self.write({'android':d, 'ios':[], 'serial': 'todo'}) #device and device.serial})
 
     def post(self):
         '''connect device'''
