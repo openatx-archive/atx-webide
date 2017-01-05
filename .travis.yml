@@ -6,13 +6,21 @@ install:
 script:
 - echo "skip"
 deploy:
-  provider: pypi
-  user: codeskyblue
-  password:
-    secure: V0IZLABqtqrKCoMQ4hS9ArVtkPwQaDWOuuNzYj35LGL0MajmyD+I8QQw+JN6Himo+9y8p+Pe0+ZFsaFp6v72GlMHVAqFZbyGw+N/CNKd8eIQVO4u06B4BUXrcS+isItMqSUnzyz0rqsws1yok0J/077m1laedkpFUwoGrI5uf3uLJNBEWN1YTA+KRQaRW2DZ+yNDN1GG9DU66J7ty0LkNjVgCSWYyxL3HAed++uCzWn6zTofm068sATcS5CqjCS5IgDo5ijzH7/5ZOz4x5Kxkzr15FkYrSqL+RNFVpJ7kTZeo1ORZ6/lWAz//Puz1nlxr8D9U1k+kTyqiqQzE8DtuhyGREk0GiphopyF5BVBHyDGimBV1iBb3zRQ0YFkEZ7Psq4wnpthRjSQp3owROlud2n3mGYJmibDCDhTQHXKBwRLAMWetJKR6j696741wF8bXiUJa96n2w4dKpTv4obInMcfisqU8XLWwQhnxRGD7aGLPuutLpOeo3/QRaMG4I7G7IkR2bIqLtyVU7ndn3zuTcc2kktxe99Tb4CGulkARqma+/C1eIwrx5+/y7HWSCWZWE4+dTK4kSvegjnz5aFDUqtQm1JOcy0xzf8MXtVyTGUZ7WNjthfWWx7gTXcKSF1Fg0j2MjvxczS8mHj6NhGTwZGHgIluB1B0rwdq2LWv6S4=
-  on:
-    distributions: sdist bdist_wheel
-    repo: openatx/atx-webide
+  - provider: pypi
+    user: codeskyblue
+    password:
+      secure: V0IZLABqtqrKCoMQ4hS9ArVtkPwQaDWOuuNzYj35LGL0MajmyD+I8QQw+JN6Himo+9y8p+Pe0+ZFsaFp6v72GlMHVAqFZbyGw+N/CNKd8eIQVO4u06B4BUXrcS+isItMqSUnzyz0rqsws1yok0J/077m1laedkpFUwoGrI5uf3uLJNBEWN1YTA+KRQaRW2DZ+yNDN1GG9DU66J7ty0LkNjVgCSWYyxL3HAed++uCzWn6zTofm068sATcS5CqjCS5IgDo5ijzH7/5ZOz4x5Kxkzr15FkYrSqL+RNFVpJ7kTZeo1ORZ6/lWAz//Puz1nlxr8D9U1k+kTyqiqQzE8DtuhyGREk0GiphopyF5BVBHyDGimBV1iBb3zRQ0YFkEZ7Psq4wnpthRjSQp3owROlud2n3mGYJmibDCDhTQHXKBwRLAMWetJKR6j696741wF8bXiUJa96n2w4dKpTv4obInMcfisqU8XLWwQhnxRGD7aGLPuutLpOeo3/QRaMG4I7G7IkR2bIqLtyVU7ndn3zuTcc2kktxe99Tb4CGulkARqma+/C1eIwrx5+/y7HWSCWZWE4+dTK4kSvegjnz5aFDUqtQm1JOcy0xzf8MXtVyTGUZ7WNjthfWWx7gTXcKSF1Fg0j2MjvxczS8mHj6NhGTwZGHgIluB1B0rwdq2LWv6S4=
+    on:
+      distributions: sdist bdist_wheel
+      repo: openatx/atx-webide
+  - provider: pypi
+    user: codeskyblue
+    password:
+      secure: V0IZLABqtqrKCoMQ4hS9ArVtkPwQaDWOuuNzYj35LGL0MajmyD+I8QQw+JN6Himo+9y8p+Pe0+ZFsaFp6v72GlMHVAqFZbyGw+N/CNKd8eIQVO4u06B4BUXrcS+isItMqSUnzyz0rqsws1yok0J/077m1laedkpFUwoGrI5uf3uLJNBEWN1YTA+KRQaRW2DZ+yNDN1GG9DU66J7ty0LkNjVgCSWYyxL3HAed++uCzWn6zTofm068sATcS5CqjCS5IgDo5ijzH7/5ZOz4x5Kxkzr15FkYrSqL+RNFVpJ7kTZeo1ORZ6/lWAz//Puz1nlxr8D9U1k+kTyqiqQzE8DtuhyGREk0GiphopyF5BVBHyDGimBV1iBb3zRQ0YFkEZ7Psq4wnpthRjSQp3owROlud2n3mGYJmibDCDhTQHXKBwRLAMWetJKR6j696741wF8bXiUJa96n2w4dKpTv4obInMcfisqU8XLWwQhnxRGD7aGLPuutLpOeo3/QRaMG4I7G7IkR2bIqLtyVU7ndn3zuTcc2kktxe99Tb4CGulkARqma+/C1eIwrx5+/y7HWSCWZWE4+dTK4kSvegjnz5aFDUqtQm1JOcy0xzf8MXtVyTGUZ7WNjthfWWx7gTXcKSF1Fg0j2MjvxczS8mHj6NhGTwZGHgIluB1B0rwdq2LWv6S4=
+    on:
+      distributions: sdist bdist_wheel
+      repo: openatx/atx-webide
+      tags: true
 notifications:
   webhooks:
     urls:
