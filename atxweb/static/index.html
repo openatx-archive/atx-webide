@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" />
-    <title>Atx Web IDE</title>
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="{{static_url('css/bootstrap-3.3.5.min.css')}}">
-    <link rel="stylesheet" href="{{static_url('css/prism.css')}}">
-    <link rel="stylesheet" href="{{static_url('css/index.css')}}">
-  </head>
 
-  <body>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" />
+  <title>Atx Web IDE</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="{{static_url('css/bootstrap-3.3.5.min.css')}}">
+  <link rel="stylesheet" href="{{static_url('css/prism.css')}}">
+  <link rel="stylesheet" href="{{static_url('css/index.css')}}">
+</head>
 
-    <!-- <nav class="navbar navbar-default">
+<body>
+  <!-- <nav class="navbar navbar-default">
       <div class="container-fluid">
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -23,89 +23,119 @@
         </div>
       </div>
     </nav> -->
-
-    <div id="main-content" class="container-fluid">
-      <div class="col-md-12">
-        <!-- left panel -->
-        <div id="left-panel" v-bind:style="{'width':(100-layout.right_portion)+'%'}">
-          <ul class="nav nav-tabs">
-            <li v-bind:class="{'active': tab=='blocklyDiv'}"><a @click="switchTab('blocklyDiv')">Blockly</a></li>
-            <li v-bind:class="{'active': tab=='pythonDiv'}"><a @click="switchTab('pythonDiv')">Python</a></li>
-            <li v-bind:class="{'active': tab=='pythonExtDiv'}"><a @click="switchTab('pythonExtDiv')">Exts</a></li>
-            <li v-bind:class="{'active': tab=='pythonManualDiv'}"><a @click="switchTab('pythonManualDiv')">Coding</a></li>
-            <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
-            <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
-              <li v-if="blockly.selected" v-bind:class='{"disabled":blockly.running}' class="pull-right" @click="runBlocklyStep" ><a><span class="glyphicon glyphicon-step-forward"></span>运行选中</a></li>
-              <li v-if="blockly.running" class="pull-right" @click="stopBlockly"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
-              <li v-else class="pull-right" @click="runBlockly" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
-              <li class="pull-right" @click="saveWorkspace"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
-            </template>
-            <template v-if="tab=='pythonExtDiv'">
-              <li class="pull-right" @click="savePyExtension"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
-              <li class="pull-right" @click='toggleExtVimMode'><a>VimMode: ${ ext.vimmode ? 'ON' : 'OFF'}</a></li>
-            </template>
-            <template v-if="tab=='pythonManualDiv'">
-              <li v-bind:class='{"disabled":manual.running}' class="pull-right" @click="runPyManualCodeToLine" ><a><span class="glyphicon glyphicon-step-forward"></span>运行到本行</a></li>
-              <li v-if="manual.running" class="pull-right" @click="stopPyManualCode"><a><span class="glyphicon glyphicon-stop"></span>停止</a></li>
-              <li v-else class="pull-right" @click="runPyManualCode" ><a><span class="glyphicon glyphicon-play"></span>运行</a></li>
-              <li class="pull-right" @click="savePyManualCode"><a><span class="glyphicon glyphicon-floppy-save"></span>保存</a></li>
-              <li class="pull-right" @click='toggleManualVimMode'><a>VimMode: ${ manual.vimmode ? 'ON' : 'OFF'}</a></li>
-            </template>
-          </ul>
-          <div class="tab-content" >
-            <div id="blocklyDiv" v-bind:class="{'active': tab=='blocklyDiv'}" class="tab-pane"></div>
-            <div id="pythonDiv" v-bind:class="{'active': tab=='pythonDiv'}" class="tab-pane">
-              <pre id="python-code-viewer" style="opacity:0"></pre>
+  <div id="main-content" class="container-fluid">
+    <div class="col-md-12">
+      <!-- left panel -->
+      <div id="left-panel" v-bind:style="{'width':(100-layout.right_portion)+'%'}">
+        <ul class="nav nav-tabs">
+          <!-- <li v-bind:class="{'active': tab=='blocklyDiv'}"><a @click="switchTab('blocklyDiv')">Blockly</a></li> -->
+          <!-- <li v-bind:class="{'active': tab=='pythonDiv'}"><a @click="switchTab('pythonDiv')">Python</a></li> -->
+          <!-- <li v-bind:class="{'active': tab=='pythonExtDiv'}"><a @click="switchTab('pythonExtDiv')">Exts</a></li> -->
+          <li v-bind:class="{'active': tab=='pythonManualDiv'}"><a @click="switchTab('pythonManualDiv')">Coding</a></li>
+          <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
+          <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
+            <li v-if="blockly.selected" v-bind:class='{"disabled":blockly.running}' class="pull-right" @click="runBlocklyStep">
+              <a>
+                <span class="glyphicon glyphicon-step-forward"></span>运行选中</a>
+            </li>
+            <li v-if="blockly.running" class="pull-right" @click="stopBlockly">
+              <a>
+                <span class="glyphicon glyphicon-stop"></span>停止</a>
+            </li>
+            <li v-else class="pull-right" @click="runBlockly">
+              <a>
+                <span class="glyphicon glyphicon-play"></span>运行</a>
+            </li>
+            <li class="pull-right" @click="saveWorkspace">
+              <a>
+                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+            </li>
+          </template>
+          <template v-if="tab=='pythonExtDiv'">
+            <li class="pull-right" @click="savePyExtension">
+              <a>
+                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+            </li>
+            <li class="pull-right" @click='toggleExtVimMode'><a>VimMode: ${ ext.vimmode ? 'ON' : 'OFF'}</a></li>
+          </template>
+          <template v-if="tab=='pythonManualDiv'">
+            <li v-bind:class='{"disabled":manual.running}' class="pull-right" @click="runPyManualCodeToLine">
+              <a>
+                <span class="glyphicon glyphicon-step-forward"></span>运行到本行</a>
+            </li>
+            <li v-if="manual.running" class="pull-right" @click="stopPyManualCode">
+              <a>
+                <span class="glyphicon glyphicon-stop"></span>停止</a>
+            </li>
+            <li v-else class="pull-right" @click="runPyManualCode">
+              <a>
+                <span class="glyphicon glyphicon-play"></span>运行</a>
+            </li>
+            <li class="pull-right" @click="savePyManualCode">
+              <a>
+                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+            </li>
+            <li class="pull-right" @click='toggleManualVimMode'><a>VimMode: ${ manual.vimmode ? 'ON' : 'OFF'}</a></li>
+          </template>
+        </ul>
+        <div class="tab-content">
+          <div id="blocklyDiv" v-bind:class="{'active': tab=='blocklyDiv'}" class="tab-pane"></div>
+          <div id="pythonDiv" v-bind:class="{'active': tab=='pythonDiv'}" class="tab-pane">
+            <pre id="python-code-viewer" style="opacity:0"></pre>
+          </div>
+          <div id="pythonExtDiv" v-bind:class="{'active': tab=='pythonExtDiv'}" class="tab-pane clearfix">
+            <pre id="python-ext-editor" style="opacity:0"></pre>
+          </div>
+          <div id="pythonManualDiv" v-bind:class="{'active': tab=='pythonManualDiv'}" class="tab-pane" style="position:relative">
+            <div>
+              <pre id="python-man-editor" style="opacity:0"></pre>
+              <p class="small text-muted">
+                <b style="margin-right:3px">Save</b><i style="margin-right:8px">Ctrl-S</i>
+                <b style="margin-right:3px">Run</b><i style="margin-right:8px">Ctrl-G</i>
+                <b style="margin-right:3px">RunToLine</b><i style="margin-right:8px">Ctrl-Shift-G</i>
+              </p>
             </div>
-            <div id="pythonExtDiv" v-bind:class="{'active': tab=='pythonExtDiv'}" class="tab-pane clearfix">
-              <pre id="python-ext-editor" style="opacity:0"></pre>
-            </div>
-            <div id="pythonManualDiv" v-bind:class="{'active': tab=='pythonManualDiv'}" class="tab-pane" style="position:relative">
-              <div>
-                <pre id="python-man-editor" style="opacity:0"></pre>
-                <p class="small text-muted">
-                  <b style="margin-right:3px">Save</b><i style="margin-right:8px">Ctrl-S</i>
-                  <b style="margin-right:3px">Run</b><i style="margin-right:8px">Ctrl-G</i>
-                  <b style="margin-right:3px">RunToLine</b><i style="margin-right:8px">Ctrl-Shift-G</i>
-                </p>
-              </div>
-              <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; overflow-y:auto; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
-                <ul class="clearfix">
-                  <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
-                    <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
-                      <img src="${img.path}" style="height:50px"><p>${img.name | imagename}</p>
-                    </div>
-                  </li>
-                </ul>
-                <hr/>
-                <ul class="clearfix">
-                  <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
-                    <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
-                      <img src="${img.path}" style="height:50px"><p>${img.name | imagename}</p>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div id="imagesDiv" v-bind:class="{'active': tab=='imagesDiv'}" class="tab-pane">
+            <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; overflow-y:auto; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
               <ul class="clearfix">
-                <li v-for="img in images">
-                  <div><img src="${img.path}"><p>${img.name}</p></div>
+                <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
+                  <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
+                    <img src="${img.path}" style="height:50px">
+                    <p>${img.name | imagename}</p>
+                  </div>
+                </li>
+              </ul>
+              <hr/>
+              <ul class="clearfix">
+                <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
+                  <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
+                    <img src="${img.path}" style="height:50px">
+                    <p>${img.name | imagename}</p>
+                  </div>
                 </li>
               </ul>
             </div>
           </div>
-          <div v-show="layout.right_portion<=50">
-            <h4>Console
+          <div id="imagesDiv" v-bind:class="{'active': tab=='imagesDiv'}" class="tab-pane">
+            <ul class="clearfix">
+              <li v-for="img in images">
+                <div><img src="${img.path}">
+                  <p>${img.name}</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div v-show="layout.right_portion<=50">
+          <h4>Console
               <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
-            <pre class='console'></pre>
-          </div>
-        </div> <!-- #left-panel -->
-
-        <!-- right-panel -->
-        <div id="right-panel" v-bind:style="{'width':layout.right_portion+'%'}">
-          <h4>Screen
+          <pre class='console'></pre>
+        </div>
+      </div>
+      <!-- #left-panel -->
+      <!-- right-panel -->
+      <div id="right-panel" v-bind:style="{'width':layout.right_portion+'%'}">
+        <h4>Screen
             <button type="button" class="btn btn-default btn-xs" @click="saveScreenCrop">保存选区</button>
             <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
             <template v-else>
@@ -115,188 +145,188 @@
             <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing || autorefresh">刷新</button>
             <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
           </h4>
-          <div id="screen-wrapper" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}" style="position: relative;">
-            <div id="device-chooser" v-bind:style="{'display': choosing ? 'block' : 'none'}">
-              <p>连接设备</p>
-              <form>
-                <div class="center-block">
-                  <label class="radio-inline">
-                    <input type="radio" v-model="device.platform" name="platform" value="android" checked>Android
-                  </label>
-                  <label class="radio-inline">
-                    <input type="radio" v-model="device.platform" name="platform" value="ios">iOS
-                  </label>
-                </div>
-                <div v-show='device.platform=="ios"'>
-                  <p>请输入连接地址</p>
-                  <input type="text" v-model="ios_url" placeholder="http://..." class="form-control">
-                </div>
-                <div v-else>
-                  <p>请选择序列号</p>
-                  <select v-model="android_serial" class="form-control">
-                    <option v-if="android_serial_choices.length==0" value="" disabled selected>No Device available!</option>
-                    <option v-for="s in android_serial_choices">${s}</option>
-                  </select>
-                </div>
-                <div>
-                  <button type="button" class="btn btn-primary" @click="connectDevice">连 接</button>
-                  <button type="button" class="btn btn-primary" @click="cancelConnectDevice">取 消</button>
-                </div>
-              </form>
-            </div> <!-- #device-chooser -->
-            <div id="screen-overlays" class="full">
-              <div id="overlays-swipe" class="full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
+        <div id="screen-wrapper" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}" style="position: relative;">
+          <div id="device-chooser" v-bind:style="{'display': choosing ? 'block' : 'none'}">
+            <p>连接设备</p>
+            <form>
+              <div class="center-block">
+                <label class="radio-inline">
+                  <input type="radio" v-model="device.platform" name="platform" value="android" checked>Android
+                </label>
+                <label class="radio-inline">
+                  <input type="radio" v-model="device.platform" name="platform" value="ios">iOS
+                </label>
               </div>
-            </div> <!-- #screen-overlays -->
-            <div id="screen-crop" class="image-crop"></div>
-            <div id="screen-crop-rect" class="image-crop"></div>
-            <canvas id="canvas" @contextmenu="saveScreenCropRightClick">
-              Browser not support canvas
-            </canvas>
-          </div> <!-- #screen-wrapper -->
-          <div v-show="layout.right_portion>50">
-            <h4>Console
+              <div v-show='device.platform=="ios"'>
+                <p>请输入连接地址</p>
+                <input type="text" v-model="ios_url" placeholder="http://..." class="form-control">
+              </div>
+              <div v-else>
+                <p>请选择序列号</p>
+                <select v-model="android_serial" class="form-control">
+                  <option v-if="android_serial_choices.length==0" value="" disabled selected>No Device available!</option>
+                  <option v-for="s in android_serial_choices">${s}</option>
+                </select>
+              </div>
+              <div>
+                <button type="button" class="btn btn-primary" @click="connectDevice">连 接</button>
+                <button type="button" class="btn btn-primary" @click="cancelConnectDevice">取 消</button>
+              </div>
+            </form>
+          </div>
+          <!-- #device-chooser -->
+          <div id="screen-overlays" class="full">
+            <div id="overlays-swipe" class="full">
+              <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
+            </div>
+          </div>
+          <!-- #screen-overlays -->
+          <div id="screen-crop" class="image-crop"></div>
+          <div id="screen-crop-rect" class="image-crop"></div>
+          <canvas id="canvas" @contextmenu="saveScreenCropRightClick">
+            Browser not support canvas
+          </canvas>
+        </div>
+        <!-- #screen-wrapper -->
+        <div v-show="layout.right_portion>50">
+          <h4>Console
               <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
-            <pre class='console'></pre>
-          </div>
-        </div> <!-- #right-panel -->
-
-        <div id="resize-handle" v-bind:style="{'left':(layout.width-60)*(1-layout.right_portion/100)+15-5+'px','top':layout.height/3+'px'}">
-          <img src="{{static_url('arrows_drag_horiz.png')}}" style="width:100%;height:100%;">
+          <pre class='console'></pre>
         </div>
-      </div> <!-- col-md-12 -->
-
-      <div v-show="tab=='pythonManualDiv' && manual.contextmenu.img" style="position:absolute;display:none;" v-bind:style="{'display':manual.contextmenu.img!=null, 'left':manual.contextmenu.left+'px', 'top':manual.contextmenu.top+'px'}">
-        <ul class="dropdown-menu" style="display:block;">
-          <li v-bind:class="{'disabled':!overlays.crop_bounds.bound}"><a @click="onMenuReplaceImage">替换为选区图片</a></li>
-          <li><a @click="onMenuInsertClickImage">插入click_image</a></li>
-          <li v-bind:class="{'disabled':!manual.row_image}"><a @click="onMenuReplaceRowImage">替换本行图片</a></li>
-          <li><a @click="onMenuDelete">删除</a></li>
-        </ul>
       </div>
-
-    </div> <!-- #main-content -->
-
-    <xml id="toolbox" style="display: none">
-      <category name="ATX" colour="160">
-        <block type="atx_connect"></block>
-        <block type="atx_start_app"></block>
-        <block type="atx_stop_app"></block>
-        <block type="atx_delay"></block>
-        <block type="atx_click"></block>
-        <block type="atx_swipe"></block>
-        <block type="atx_screenshot">
-          <value name="FILENAME">
-            <block type="text">
-              <field name="TEXT">screen.png</field>
-            </block>
-          </value>
-        </block>
-        <block type="atx_keep_screen"></block>
-        <block type="atx_free_screen"></block>
-        <block type="atx_blank"></block>
-      </category>
-      <category name="ATX图片" colour="160">
-        <block type="atx_click_image">
-        </block>
-        <block type="atx_wait">
-        </block>
-        <block type="atx_exists">
-        </block>
-        <block type="atx_image_file">
-        </block>
-        <block type="atx_image_pattern">
-          <value name="FILENAME">
-            <block type="atx_image_file"></block>
-          </value>
-        </block>
-        <block type="atx_image_pattern_offset">
-          <value name="FILENAME">
-            <block type="atx_image_crop_preview">
-              <value name="IMAGE_CROP">
-                <block type="atx_image_crop"></block>
-              </value>
-            </block>
-          </value>
-        </block>
-      </category>
-      <category name="逻辑" colour="210">
-        <block type="controls_if"></block>
-        <block type="logic_compare"></block>
-        <block type="logic_operation"></block>
-        <block type="logic_negate"></block>
-        <block type="logic_boolean"></block>
-        <block type="logic_null" disabled="true"></block>
-      </category>
-      <category name="循环" colour="120">
-        <block type="controls_repeat_ext">
-          <value name="TIMES">
-            <shadow type="math_number">
-              <field name="NUM">10</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="controls_repeat"></block>
-        <block type="controls_whileUntil"></block>
-        <block type="controls_forEach"></block>
-        <block type="controls_flow_statements"></block>
-      </category>
-      <category name="变量" colour="330">
-        <block type="variables_set"></block>
-        <block type="variables_get"></block>
-        <block type="math_number"></block>
-        <block type="math_arithmetic"></block>
-        <block type="math_random_int">
-          <value name="FROM">
-            <shadow type="math_number">
-              <field name="NUM">1</field>
-            </shadow>
-          </value>
-          <value name="TO">
-            <shadow type="math_number">
-              <field name="NUM">100</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="math_random_float"></block>
-        <block type="text"></block>
-        <block type="lists_create_with">
-          <mutation items="0"></mutation>
-        </block>
-        <block type="lists_create_with"></block>
-      </category>
-      <category name="常用" colour="240">
-        <block type="text_print">
-          <value name="TEXT">
-            <shadow type="text">
-              <field name="TEXT">abc</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="time_sleep"></block>
-        <block type="time_time"></block>
-      </category>
-      <category name="扩展" colour="100">
-      </category>
-    </xml>
-
-    <!-- jquery -->
-    <script src="{{static_url('js/jquery-1.11.3.min.js')}}"></script>
-    <script src="{{static_url('js/notify.js')}}"></script>
-    <!-- hightlight -->
-    <script src="{{static_url('ace/ace.js')}}" data-manual></script>
-    <script src="{{static_url('ace/keybinding-vim.js')}}" data-manual></script>
-    <!-- blockly -->
-    <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
-    <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>
-    <script src="{{static_url('blockly/msg/js/en.js')}}"></script>
-    <script src="{{static_url('blockly/python_compressed.js')}}"></script>
-    <!-- vue & main -->
-    <script src="{{static_url('js/vue.min.js')}}"></script>
-    <script src="{{static_url('js/index.js')}}"></script>
-
-  </body>
+      <!-- #right-panel -->
+      <div id="resize-handle" v-bind:style="{'left':(layout.width-60)*(1-layout.right_portion/100)+15-5+'px','top':layout.height/3+'px'}">
+        <img src="{{static_url('arrows_drag_horiz.png')}}" style="width:100%;height:100%;">
+      </div>
+    </div>
+    <!-- col-md-12 -->
+    <div v-show="tab=='pythonManualDiv' && manual.contextmenu.img" style="position:absolute;display:none;" v-bind:style="{'display':manual.contextmenu.img!=null, 'left':manual.contextmenu.left+'px', 'top':manual.contextmenu.top+'px'}">
+      <ul class="dropdown-menu" style="display:block;">
+        <li v-bind:class="{'disabled':!overlays.crop_bounds.bound}"><a @click="onMenuReplaceImage">替换为选区图片</a></li>
+        <li><a @click="onMenuInsertClickImage">插入click_image</a></li>
+        <li v-bind:class="{'disabled':!manual.row_image}"><a @click="onMenuReplaceRowImage">替换本行图片</a></li>
+        <li><a @click="onMenuDelete">删除</a></li>
+      </ul>
+    </div>
+  </div>
+  <!-- #main-content -->
+  <xml id="toolbox" style="display: none">
+    <category name="ATX" colour="160">
+      <block type="atx_connect"></block>
+      <block type="atx_start_app"></block>
+      <block type="atx_stop_app"></block>
+      <block type="atx_delay"></block>
+      <block type="atx_click"></block>
+      <block type="atx_swipe"></block>
+      <block type="atx_screenshot">
+        <value name="FILENAME">
+          <block type="text">
+            <field name="TEXT">screen.png</field>
+          </block>
+        </value>
+      </block>
+      <block type="atx_keep_screen"></block>
+      <block type="atx_free_screen"></block>
+      <block type="atx_blank"></block>
+    </category>
+    <category name="ATX图片" colour="160">
+      <block type="atx_click_image">
+      </block>
+      <block type="atx_wait">
+      </block>
+      <block type="atx_exists">
+      </block>
+      <block type="atx_image_file">
+      </block>
+      <block type="atx_image_pattern">
+        <value name="FILENAME">
+          <block type="atx_image_file"></block>
+        </value>
+      </block>
+      <block type="atx_image_pattern_offset">
+        <value name="FILENAME">
+          <block type="atx_image_crop_preview">
+            <value name="IMAGE_CROP">
+              <block type="atx_image_crop"></block>
+            </value>
+          </block>
+        </value>
+      </block>
+    </category>
+    <category name="逻辑" colour="210">
+      <block type="controls_if"></block>
+      <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
+      <block type="logic_negate"></block>
+      <block type="logic_boolean"></block>
+      <block type="logic_null" disabled="true"></block>
+    </category>
+    <category name="循环" colour="120">
+      <block type="controls_repeat_ext">
+        <value name="TIMES">
+          <shadow type="math_number">
+            <field name="NUM">10</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="controls_repeat"></block>
+      <block type="controls_whileUntil"></block>
+      <block type="controls_forEach"></block>
+      <block type="controls_flow_statements"></block>
+    </category>
+    <category name="变量" colour="330">
+      <block type="variables_set"></block>
+      <block type="variables_get"></block>
+      <block type="math_number"></block>
+      <block type="math_arithmetic"></block>
+      <block type="math_random_int">
+        <value name="FROM">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+        <value name="TO">
+          <shadow type="math_number">
+            <field name="NUM">100</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="math_random_float"></block>
+      <block type="text"></block>
+      <block type="lists_create_with">
+        <mutation items="0"></mutation>
+      </block>
+      <block type="lists_create_with"></block>
+    </category>
+    <category name="常用" colour="240">
+      <block type="text_print">
+        <value name="TEXT">
+          <shadow type="text">
+            <field name="TEXT">abc</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="time_sleep"></block>
+      <block type="time_time"></block>
+    </category>
+    <category name="扩展" colour="100">
+    </category>
+  </xml>
+  <!-- jquery -->
+  <script src="{{static_url('js/jquery-1.11.3.min.js')}}"></script>
+  <script src="{{static_url('js/notify.js')}}"></script>
+  <!-- hightlight -->
+  <script src="{{static_url('ace/ace.js')}}" data-manual></script>
+  <script src="{{static_url('ace/keybinding-vim.js')}}" data-manual></script>
+  <!-- blockly -->
+  <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
+  <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>
+  <script src="{{static_url('blockly/msg/js/en.js')}}"></script>
+  <script src="{{static_url('blockly/python_compressed.js')}}"></script>
+  <!-- vue & main -->
+  <script src="{{static_url('js/vue.min.js')}}"></script>
+  <script src="{{static_url('js/index.js')}}"></script>
+</body>
 
 </html>
