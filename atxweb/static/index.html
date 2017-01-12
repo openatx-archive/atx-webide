@@ -90,7 +90,7 @@
               <ul class="clearfix">
                 <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
                   <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
-                    <img src="${img.path}" style="height:50px">
+                    <img src="${img.path}?h=${img.hash}" style="height:50px">
                     <p>${img.name | imagename}</p>
                   </div>
                 </li>
@@ -99,7 +99,7 @@
               <ul class="clearfix">
                 <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
                   <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
-                    <img src="${img.path}" style="height:50px">
+                    <img src="${img.path}?h=${img.hash}" style="height:50px">
                     <p>${img.name | imagename}</p>
                   </div>
                 </li>

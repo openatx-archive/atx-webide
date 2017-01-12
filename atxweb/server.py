@@ -195,9 +195,16 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                     realpath = realpath[2:]
                 name = os.path.basename(name).split('@')[0]
                 if realpath.startswith('screenshots/'):
-                    screenshots.append({'name':name, 'path':realpath})
+                    screenshots.append({
+                        'name': name, 
+                        'path': realpath
+                    })
                 else:
-                    images.append({'name':name, 'path':realpath})
+                    images.append({
+                        'name': name, 
+                        'path': realpath, 
+                        'hash': '{}'.format(os.path.getmtime(realpath)).replace('.', '-')
+                    })
             self.write_message({'type': 'image_list', 'images': images, 'screenshots':screenshots, 'latest': latest_screen})
         elif command == 'stop':
             self._run = False

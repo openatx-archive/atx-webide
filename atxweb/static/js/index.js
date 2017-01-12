@@ -7,7 +7,7 @@ function notify(message, className, position, autoHideDelay, element) {
 }
 
 Vue.filter('imagename', function(text) {
-  return text.replace(/(\.\d+x\d+)?\.png/, "");
+  return text; // text.replace(/(\.\d+x\d+)?\.png/, "");
 });
 
 Vue.component('tree-node', {
@@ -63,7 +63,7 @@ var vm = new Vue({
     choosing: false,
     android_serial_choices: [],
     android_serial: '',
-    ios_url: '',
+    ios_url: 'http://localhost:8100',
     // device status
     device: {
       refreshing: false,
@@ -106,12 +106,12 @@ var vm = new Vue({
     ext: {
       dirty: false,
       pythonText: '',
-      vimmode: true,
+      vimmode: false,
     },
     manual: {
       dirty: false,
       pythonText: '',
-      vimmode: true,
+      vimmode: false,
       selected: null,
       running: false,
       cursor: null,
@@ -676,7 +676,8 @@ var vm = new Vue({
           notify('已替换', 'success');
           $('#screen-crop').css({ 'left': '0px', 'top': '0px', 'width': '0px', 'height': '0px' });
           self.overlays.crop_bounds.bound = null;
-          target.src = img.path + "?t=" + new Date().getTime();
+          // target.src = img.path + "?t=" + new Date().getTime();
+          ws.send(JSON.stringify({ command: "refresh" }));
         },
         error: function(err) {
           console.log('替换失败:\n', err);
@@ -774,7 +775,7 @@ $(function() {
       fontSize: 14,
       newLineMode: 'unix',
       theme: 'ace/theme/monokai',
-      keyboardHandler: 'ace/keyboard/vim',
+      keyboardHandler: '',
     });
     // handle Ctrl-S
     pymaneditor.commands.addCommand({
@@ -990,7 +991,7 @@ $(function() {
             for (var i = 0, info; i < data.images.length; i++) {
               info = data.images[i];
               window.blocklyImageList.push([info['name'], info['path']]);
-              vm.images.push({ name: info['name'], path: window.blocklyBaseURL + info['path'] });
+              vm.images.push({ name: info['name'], path: window.blocklyBaseURL + info['path'], hash: info['hash'] });
             }
             window.blocklyCropImageList = [];
             for (var i = 0, info; i < data.screenshots.length; i++) {
