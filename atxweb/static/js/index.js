@@ -628,7 +628,8 @@ var vm = new Vue({
       }
       var cursor = pymaneditor.getCursorPosition();
       var line = pymaneditor.session.getLine(cursor.row);
-      var script = 'd.click_image(u"' + this.manual.contextmenu.img.name + '")\n';
+      var filename = this.manual.contextmenu.img.name.replace(/(\.\d+x\d+)?\.png/, "@auto.png")
+      var script = 'd.click_image(u"' + filename + '")\n';
       if (line !== '') {
         cursor = { row: cursor.row + 1, column: 0 };
       }
