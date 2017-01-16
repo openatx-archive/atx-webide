@@ -102,12 +102,6 @@ var vm = new Vue({
       rect_bounds: {}, // atx_click_image
       swipe_points: {}, // atx_swipe
     },
-    // python extension
-    ext: {
-      dirty: false,
-      pythonText: '',
-      vimmode: false,
-    },
     manual: {
       dirty: false,
       pythonText: '',
@@ -146,8 +140,6 @@ var vm = new Vue({
         return;
       }
       if (this.tab == 'blocklyDiv' && this.blockly.dirty) { this.saveWorkspace(); }
-      if (this.tab == 'pythonExtDiv' && this.ext.dirty) { this.savePyExtension(); }
-      if (which == 'pythonExtDiv' && pyexteditor) { pyexteditor.focus(); }
       if (which == 'pythonManualDiv' && pymaneditor) { pymaneditor.focus(); }
       this.tab = which;
     },
@@ -371,134 +363,8 @@ var vm = new Vue({
       evt.preventDefault()
       this.saveScreenCrop();
     },
-    savePyExtension: function() {
-      if (!pyexteditor) {
-        return;
-      }
-      this.ext.pythonText = pyexteditor.getValue();
-      this.updateExtBlocks();
-      var self = this;
-      $.ajax({
-        url: '/extension',
-        method: 'POST',
-        data: { 'python_text': this.ext.pythonText },
-        success: function(data) {
-          notify('Extension保存成功', 'success');
-          self.ext.dirty = false;
-        },
-        error: function(e) {
-          console.log('Extension保存失败:', e);
-          notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
-        },
-      });
-    },
-    addExtBlock: function(name, args) {
-      if (!workspace) {
-        return;
-      }
-      var helpUrl = 'https://github.com/codeskyblue/AirtestX';
-      // register block
-      var block_type = 'atx_ext_' + name;
-      var inject_device = false;
-      if (args.length > 0 && args[0][0] == 'd') {
-        args = args.splice(1, args.length);
-        inject_device = true;
-      }
-      Blockly.Blocks[block_type] = {
-          init: function() {
-            this.appendDummyInput()
-              .appendField(name);
-            for (var i = 0, arg; i < args.length; i++) {
-              arg = args[i];
-              this.appendDummyInput().appendField(arg[0]);
-              this.appendValueInput(arg[0]);
-            }
-            this.setInputsInline(true);
-            this.setPreviousStatement(true);
-            this.setNextStatement(true);
-            this.setColour('#74a55b');
-            this.setTooltip('');
-            this.setHelpUrl(helpUrl);
-          }
-        }
-        // register code generate
-      Blockly.Python[block_type] = function(blk) {
-        // import ext in front, must be defined in block code generate function...
-        Blockly.Python.provideFunction_('atx_import_ext', ['import ext']);
-        var argv = [],
-          v;
-        if (inject_device) { argv.push('d'); }
-        for (var i = 0, arg; i < args.length; i++) {
-          arg = args[i];
-          v = Blockly.Python.valueToCode(blk, arg[0], Blockly.Python.ORDER_ATOMIC);
-          if (v == '') { v = 'None'; }
-          argv.push(arg[0] + '=' + v);
-        }
-        var code = 'ext.' + name + '(' + argv.join(', ') + ')\n';
-        return code;
-      }
-
-      // update xml data && re populate toolbox
-      var toolbox = document.getElementById('toolbox'),
-        nodes = toolbox.lastElementChild.children;
-      for (var i = 0; i < nodes.length; i++) {
-        if (nodes[i].getAttribute('type') == block_type) {
-          return;
-        }
-      }
-      var node = document.createElement('block');
-      node.setAttribute('type', block_type);
-      toolbox.lastElementChild.appendChild(node);
-      var tree = Blockly.Options.parseToolboxTree(toolbox);
-      // NOTE: the ones used in workspace can not be deleted
-      workspace.toolbox_.populate_(tree);
-    },
-    updateExtBlocks: function() {
-      var m, words, word, name, args,
-        funcs = [],
-        lines = this.ext.pythonText.split('\n');
-      for (var i = 0, line; i < lines.length; i++) {
-        line = lines[i];
-        m = line.match(/^\s*def\s+(\w+)\s*\((.*)\)\s*:/);
-        if (!m) {
-          continue;
-        }
-        name = m[1];
-        words = m[2].split(',')
-        args = [];
-        for (var j = 0; j < words.length; j++) {
-          word = words[j];
-          m = word.match(/^\s*(\w+)(\s*\=\s*(\w+))?/);
-          if (!m) {
-            continue;
-          }
-          args.push([m[1], m[3] || '']); // arg name & default value
-        }
-        funcs.push({ name, args });
-      }
-      var toolbox = document.getElementById('toolbox'),
-        nodes = toolbox.lastElementChild.children;
-      // remove old
-      for (var i = 0, node; i < nodes.length; i++) {
-        node = nodes[i];
-        toolbox.lastElementChild.removeChild(node);
-      }
-      // add new
-      for (var i = 0, f; i < funcs.length; i++) {
-        f = funcs[i];
-        this.addExtBlock(f.name, f.args);
-      }
-    },
     clearConsole: function() {
       $('pre.console').html('');
-    },
-    toggleExtVimMode: function() {
-      this.ext.vimmode = !this.ext.vimmode;
-      if (this.ext.vimmode) {
-        pyexteditor.setKeyboardHandler('ace/keyboard/vim');
-      } else {
-        pyexteditor.setKeyboardHandler();
-      }
     },
     runPyManualCode: function() {
       if (this.manual.dirty) { this.savePyManualCode(); }
@@ -710,7 +576,6 @@ var canvas = document.getElementById('canvas');
 var ws;
 /* ace code editor */
 var pyviewer;
-var pyexteditor;
 var pymaneditor;
 
 /* init */
@@ -731,39 +596,14 @@ $(function() {
       autoScrollEditorIntoView: false,
       showPrintMargin: false,
     });
-    // in pythonExtDiv
-    pyexteditor = ace.edit('python-ext-editor');
-    pyexteditor.container.style.opacity = "";
-    pyexteditor.$blockScrolling = Infinity;
-    pyexteditor.renderer.setScrollMargin(10, 10, 10, 10);
-    pyexteditor.getSession().setMode('ace/mode/python');
-    pyexteditor.setOptions({
-      maxLines: 40,
-      fontSize: 14,
-      newLineMode: 'unix',
-      theme: 'ace/theme/monokai',
-      keyboardHandler: 'ace/keyboard/vim',
-    });
+
     // handle Vim write
     ace.config.loadModule('ace/keyboard/vim', function(module) {
       module.Vim.defineEx('write', 'w', function(cm, params) {
-        if (cm.ace == pyexteditor) {
-          vm.savePyExtension();
-        } else if (cm.ace == pymaneditor) {
-          vm.savePyManualCode();
-        }
+        vm.savePyManualCode();
       });
     });
-    // handle Ctrl-S
-    pyexteditor.commands.addCommand({
-      name: 'savePyExtension',
-      bindKey: { win: 'Ctrl-s', mac: 'Command-s' },
-      exec: function(editor) { vm.savePyExtension(); },
-    });
-    // set data dirty flag
-    pyexteditor.on('change', function() {
-      vm.ext.dirty = true;
-    });
+
     // in pythonManualDiv
     pymaneditor = ace.edit('python-man-editor');
     pymaneditor.container.style.opacity = "";
@@ -893,51 +733,12 @@ $(function() {
     }); // loadModule done: language_tools
   }
 
-  function restoreExtension() {
-    $.get('/extension')
-      .success(function(res) {
-        vm.ext.pythonText = res.ext_text;
-        pyexteditor.setValue(res.ext_text);
-        pyexteditor.clearSelection();
-        vm.updateExtBlocks();
-        restoreWorkspace();
-      })
-      .error(function(res) {
-        alert(res.responseText);
-      })
-  }
-
   function restoreWorkspace() {
     $.get('/workspace')
       .success(function(res) {
         // change to blockly tab
         vm.tab = 'pythonManualDiv';
         var xml = Blockly.Xml.textToDom(res.xml_text);
-        // check ext functions, auto add missing ones.
-        var err_exts = [],
-          blks = $(xml).find('block');
-        for (var i = 0, type; i < blks.length; i++) {
-          type = blks[i].getAttribute('type');
-          if (!Blockly.Python[type]) {
-            if (type.substr(0, 8) == 'atx_ext_') {
-              type = type.substr(8);
-            }
-            err_exts.push(type);
-          }
-        }
-        if (err_exts.length > 0) {
-          notify('Found undefined blocks! Auto generating. Check log for more details.',
-            'warn', null, 3000);
-          console.log('missing block definition:', err_exts);
-          var txt = '\n\n';
-          for (var i = 0, func; i < err_exts.length; i++) {
-            txt += 'def ' + err_exts[i] + '(*args, **kwargs):\n    pass\n';
-          }
-          pyexteditor.insert(txt);
-          vm.ext.pythonText += txt;
-          vm.ext.dirty = true;
-          vm.updateExtBlocks();
-        }
         /* check done. */
 
         vm.$nextTick(function() {
@@ -975,7 +776,6 @@ $(function() {
     ws.onopen = function() {
       ws.send(JSON.stringify({ command: "refresh" }))
       notify('与后台通信连接成功!!!');
-      restoreExtension();
       restoreManualCode();
     };
     ws.onmessage = function(evt) {

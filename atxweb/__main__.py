@@ -11,12 +11,14 @@ def main():
     ap.add_argument('-P', '--port', required=False, help='Android adb port')
     ap.add_argument('-s', '--serial', '--udid', required=False, help='Android serial or iOS unid')
     ap.add_argument('--ios', action='store_true', help='use iOS device')
+    ap.add_argument('-q', '--quiet', action='store_true', help='quite mode, no open new browser')
     ap.add_argument('web_port', nargs='?', default=None, help='server port for webide')
 
     args = ap.parse_args()
+    open_browser = not args.quiet
 
     platform = args.ios and 'ios' or 'android'
-    server.run(args.web_port, args.host, args.port, args.serial, platform)
+    server.run(args.web_port, args.host, args.port, args.serial, platform, open_browser)
 
 if __name__ == '__main__':
     main()

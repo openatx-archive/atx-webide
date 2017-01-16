@@ -1,6 +1,7 @@
 #-*- encoding: utf-8 -*-
 
 import os
+import functools
 import sys
 import logging
 import webbrowser
@@ -144,11 +145,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             if device is None:
                 raise RuntimeError('No Device!')
 
-            mod_ext = imp.load_source('ext', 'ext.py')
-
             exec code in {
                 'd': device,
-                'ext': mod_ext,
                 'atx': atx,
                 'os': os,
                 'highlight_block': self._highlight_block,
@@ -205,7 +203,12 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                         'path': realpath, 
                         'hash': '{}'.format(os.path.getmtime(realpath)).replace('.', '-')
                     })
-            self.write_message({'type': 'image_list', 'images': images, 'screenshots':screenshots, 'latest': latest_screen})
+            self.write_message({
+                'type': 'image_list', 
+                'images': images, 
+                'screenshots': screenshots, 
+                'latest': latest_screen
+            })
         elif command == 'stop':
             self._run = False
             self.write_message({'type': 'run', 'notify': '停止中'})
@@ -241,24 +244,6 @@ class WorkspaceHandler(tornado.web.RequestHandler):
         write_file('blockly.xml', xml_text)
         write_file('blockly.py', python_text)
 
-class ExtensionHandler(tornado.web.RequestHandler):
-
-    def get(self):
-        ret = {}
-        default = '\n'.join([
-            '# -*- encoding: utf-8 -*-',
-            '#',
-            '# Created on: %s\n\n' % time.ctime(),
-        ])
-        ret['ext_text'] = read_file('ext.py', default=default)
-        if not os.path.isfile('ext.py'):
-            write_file('ext.py', default)
-        self.write(ret)
-
-    def post(self):
-        log.info('Save extension')
-        python_text = self.get_argument('python_text')
-        write_file('ext.py', python_text)
 
 class ManualCodeHandler(tornado.web.RequestHandler):
 
@@ -320,14 +305,14 @@ class DeviceHandler(tornado.web.RequestHandler):
         except EnvironmentError as e:
             print 'ERROR:', str(e)
             d = []
-        self.write({'android':d, 'ios':[], 'serial': 'todo'}) #device and device.serial})
+        self.write({'android': d, 'ios': [], 'serial': 'todo'}) #device and device.serial})
 
     def post(self):
         '''connect device'''
         global device, atx_settings
         serial = self.get_argument('serial').strip()
 
-        ## check if device is alive, should be in drivers?
+        # check if device is alive, should be in drivers?
         if device is not None:
             if hasattr(device, 'serial') and serial == device.serial:
                 if device.serial.startswith('http://'):
@@ -337,7 +322,7 @@ class DeviceHandler(tornado.web.RequestHandler):
                     self.write({'status': 'ok'})
                     return
 
-        ## wrapping args, should be in drivers? identifier?
+        # wrapping args, should be in drivers? identifier?
         settings = {}
         if serial.startswith('http://'):
             settings['platform'] = platform = 'ios'
@@ -346,7 +331,7 @@ class DeviceHandler(tornado.web.RequestHandler):
             settings['platform'] = platform = 'android'
             settings['serialno'] = serial
 
-        ## (re)connect
+        # (re)connect
         device = atx.connect(**settings)
         if platform == 'ios':
             info = device.status()
@@ -367,7 +352,6 @@ def make_app(settings={}):
         (r"/", MainHandler),
         (r'/ws', DebugWebSocket), # code debug
         (r"/workspace", WorkspaceHandler), # save and write workspace
-        (r"/extension", ExtensionHandler), # save and write py ext
         (r"/manual_code", ManualCodeHandler), # save and write py code
         (r"/images/screenshot", ScreenshotHandler),
         (r'/api/images', ImageHandler),
@@ -379,7 +363,6 @@ def make_app(settings={}):
 
 def run(web_port=None, host=None, port=None, serial=None, platform="android", open_browser=True, workdir='.'):
     os.chdir(workdir)
-    ignore_autoreload('ext.py')
 
     global IMAGE_PATH
     if not os.path.exists('screenshots'):
@@ -421,15 +404,7 @@ def run(web_port=None, host=None, port=None, serial=None, platform="android", op
     log.info("Listening port on 127.0.0.1:{}".format(web_port))
     tornado.ioloop.IOLoop.instance().start()
 
-def ignore_autoreload(*ignored_files):
-    '''hook & ignore autoreload for certain files'''
-    from tornado import autoreload
-    func = autoreload._check_file
-    if not hasattr(func, '_ignored_files'):
-        func = autoreload._check_file = hook_check_file(func)
-    func._ignored_files.update(ignored_files)
 
-import functools
 def hook_check_file(f):
     @functools.wraps(f)
     def _f(modify_times, path):
