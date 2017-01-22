@@ -116,7 +116,8 @@ var vm = new Vue({
         top: 0,
         img: null,
       },
-    }
+    },
+    resolution: '',
   },
   computed: {
     canvas_width: function() {
@@ -302,11 +303,7 @@ var vm = new Vue({
       img.crossOrigin = 'anonymous';
       img.addEventListener('load', function() {
         self.layout.screen_ratio = img.height / img.width;
-        var content = '分辨率： ' + img.width.toString() + 'x' + img.height.toString();
-        var ComponentRes = Vue.extend({
-          template: content
-        })
-        new ComponentRes().$mount('#resolve');
+        self.resolution = img.width.toString() + 'x' + img.height.toString();
         self.refreshing = false;
         self.screen = img;
         if (callback) { callback(); }
