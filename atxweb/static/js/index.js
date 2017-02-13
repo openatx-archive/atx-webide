@@ -210,7 +210,6 @@ var vm = new Vue({
       ws.send(JSON.stringify({ command: "run", code: code }));
     },
     stopBlockly: function() {
-      console.log('stop');
       ws.send(JSON.stringify({ command: "stop", code: this.blockly.pythonDebugText }));
     },
     getDeviceChoices: function() {
@@ -392,11 +391,12 @@ var vm = new Vue({
       this.manual.running = true;
       ws.send(JSON.stringify({ command: "run", code: code }));
     },
-    runPyManualCodeSelected: function() {
-      notify('Not Implemented yet.', 'error');
-    },
     stopPyManualCode: function() {
-      notify('Not Implemented yet.', 'error');
+      if (!this.manual.running) {
+        return;
+      }
+      this.manual.running = false;
+      ws.send(JSON.stringify({ command: "stop"}));
     },
     savePyManualCode: function() {
       if (!pymaneditor) {
@@ -882,10 +882,7 @@ $(function() {
   window.blocklyCropImageList = null;
   Blockly.Python.addReservedWords('highlight_block');
   goog.asserts.ENABLE_ASSERTS = true;
-  workspace = Blockly.inject(document.getElementById('blocklyDiv'), {
-    toolbox: document.getElementById('toolbox'),
-    media: '/static/blockly/media/',
-  });
+  workspace = Blockly.inject(document.getElementById('blocklyDiv'));
 
   var screenURL = '/images/screenshot?v=t' + new Date().getTime();
 
