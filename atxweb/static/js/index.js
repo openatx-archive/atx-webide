@@ -117,7 +117,13 @@ var vm = new Vue({
         img: null,
       },
     },
-    resolution: '',
+    resolution: {
+      imgWidth: 0,
+      imgHeight: 0,
+      positionX: 0,
+      positionY: 0,
+      displayMessage: "0x0",
+    },
   },
   computed: {
     canvas_width: function() {
@@ -204,7 +210,6 @@ var vm = new Vue({
       ws.send(JSON.stringify({ command: "run", code: code }));
     },
     stopBlockly: function() {
-      console.log('stop');
       ws.send(JSON.stringify({ command: "stop", code: this.blockly.pythonDebugText }));
     },
     getDeviceChoices: function() {
@@ -303,7 +308,9 @@ var vm = new Vue({
       img.crossOrigin = 'anonymous';
       img.addEventListener('load', function() {
         self.layout.screen_ratio = img.height / img.width;
-        self.resolution = img.width.toString() + 'x' + img.height.toString();
+        self.resolution.imgWidth = img.width;
+        self.resolution.imgHeight = img.height;
+        self.resolution.displayMessage = img.width.toString() + 'x' + img.height.toString();
         self.refreshing = false;
         self.screen = img;
         if (callback) { callback(); }
@@ -384,11 +391,12 @@ var vm = new Vue({
       this.manual.running = true;
       ws.send(JSON.stringify({ command: "run", code: code }));
     },
-    runPyManualCodeSelected: function() {
-      notify('Not Implemented yet.', 'error');
-    },
     stopPyManualCode: function() {
-      notify('Not Implemented yet.', 'error');
+      if (!this.manual.running) {
+        return;
+      }
+      this.manual.running = false;
+      ws.send(JSON.stringify({ command: "stop"}));
     },
     savePyManualCode: function() {
       if (!pymaneditor) {
@@ -409,6 +417,26 @@ var vm = new Vue({
           notify(e.responseTman || 'Code保存失败，请检查服务器连接是否正常', 'warn');
         },
       });
+    },
+    loadPyManualCode: function() {
+        if (!pymaneditor) {
+            return;
+        }
+        var self = this;
+        $.ajax({
+            url: '/manual_code',
+            method: 'GET',
+            success: function (data) {
+                notify('读取code数据', 'success');
+                var code = data.man_text;
+                pymaneditor.setValue(data.man_text);
+                pymaneditor.clearSelection();
+            },
+            error: function (e) {
+                console.log('Code加载失败:', e);
+                notify(e.responseTman || 'Code加载失败，请检查服务器连接是否正常', 'warn');
+            },
+        });
     },
     toggleManualVimMode: function() {
       this.manual.vimmode = !this.manual.vimmode;
@@ -854,10 +882,7 @@ $(function() {
   window.blocklyCropImageList = null;
   Blockly.Python.addReservedWords('highlight_block');
   goog.asserts.ENABLE_ASSERTS = true;
-  workspace = Blockly.inject(document.getElementById('blocklyDiv'), {
-    toolbox: document.getElementById('toolbox'),
-    media: '/static/blockly/media/',
-  });
+  workspace = Blockly.inject(document.getElementById('blocklyDiv'));
 
   var screenURL = '/images/screenshot?v=t' + new Date().getTime();
 
@@ -1221,6 +1246,12 @@ $(function() {
     if (evt.movementX == 0 && evt.movementY == 0) {
       return;
     }
+    if (vm.resolution.imgWidth == 0 || vm.resolution.imgHeight ==0) {
+      return;
+    }
+    vm.resolution.positionX = Math.round(evt.offsetX*vm.resolution.imgWidth/this.width);
+    vm.resolution.positionY = Math.round(evt.offsetY*vm.resolution.imgHeight/this.height);
+
     var blk = Blockly.selected;
     if (blk == null || blk.type != 'atx_swipe' || swipe_points.start == null) {
       return;
