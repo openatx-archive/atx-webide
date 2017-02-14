@@ -117,7 +117,13 @@ var vm = new Vue({
         img: null,
       },
     },
-    resolution: '',
+    resolution: {
+      imgWidth: 0,
+      imgHeight: 0,
+      positionX: 0,
+      positionY: 0,
+      displayMessage: "0x0",
+    },
   },
   computed: {
     canvas_width: function() {
@@ -303,7 +309,9 @@ var vm = new Vue({
       img.crossOrigin = 'anonymous';
       img.addEventListener('load', function() {
         self.layout.screen_ratio = img.height / img.width;
-        self.resolution = img.width.toString() + 'x' + img.height.toString();
+        self.resolution.imgWidth = img.width;
+        self.resolution.imgHeight = img.height;
+        self.resolution.displayMessage = img.width.toString() + 'x' + img.height.toString();
         self.refreshing = false;
         self.screen = img;
         if (callback) { callback(); }
@@ -1241,6 +1249,12 @@ $(function() {
     if (evt.movementX == 0 && evt.movementY == 0) {
       return;
     }
+    if (vm.resolution.imgWidth == 0 || vm.resolution.imgHeight ==0) {
+      return;
+    }
+    vm.resolution.positionX = Math.round(evt.offsetX*vm.resolution.imgWidth/this.width);
+    vm.resolution.positionY = Math.round(evt.offsetY*vm.resolution.imgHeight/this.height);
+
     var blk = Blockly.selected;
     if (blk == null || blk.type != 'atx_swipe' || swipe_points.start == null) {
       return;
