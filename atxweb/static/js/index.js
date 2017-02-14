@@ -396,7 +396,7 @@ var vm = new Vue({
       notify('Not Implemented yet.', 'error');
     },
     stopPyManualCode: function() {
-      notify('Not Implemented yet.', 'error');
+      ws.send(JSON.stringify({ command: "stop" }));
     },
     savePyManualCode: function() {
       if (!pymaneditor) {
