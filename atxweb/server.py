@@ -209,6 +209,9 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 'screenshots': screenshots, 
                 'latest': latest_screen
             })
+        elif command == 'stop':
+            self._run = False
+            self.write_message({'type': 'run', 'notify': '停止中'})
         elif command == 'run':
             if self._run:
                 self.write_message({'type': 'run', 'notify': '运行中'})
@@ -217,13 +220,6 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             self.write_message({'type': 'run', 'notify': '开始运行'})
             res = yield self.background_task(message.get('code'))
             self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束', 'result': res})
-        elif command == 'stop':
-            if self._run:
-                self._run = False
-                sys.exit()
-                self.write_message({'type': 'stop', 'notify': '停止运行'})
-                return
-            self.write_message({'type': 'stop', 'notify': '未运行'})
         else:
             self.write_message(u"You said: " + message)
 
