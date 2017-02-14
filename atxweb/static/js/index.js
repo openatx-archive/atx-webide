@@ -183,7 +183,7 @@ var vm = new Vue({
         error: function(e) {
           console.log('Workspace保存失败:\n', e);
           notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
-        },
+        }
       });
     },
     runBlockly: function() {
@@ -248,12 +248,20 @@ var vm = new Vue({
         method: 'POST',
         dataType: 'json',
         data: {
-          serial: serial,
+          serial: serial
         },
         success: function(data) {
           notify('连接成功, 刷新中..', 'success');
           self.choosing = false;
-          self.refreshScreen();
+          // self.refreshScreen();
+
+          self.autorefresh = setInterval(function() {
+            var url = '/images/screenshot?v=t' + new Date().getTime();
+            console.log('get screen', url);
+            self.loadScreen(url, function() {
+              ws.send(JSON.stringify({ command: "refresh" }));
+            });
+          }, 3 * 1000);
         },
         error: function(err) {
           notify('连接失败', 'error');
@@ -832,6 +840,8 @@ $(function() {
             vm.device.latest_screen = data.latest;
             notify('图片列表已刷新', 'success');
             break;
+          case 'image_latest':
+            vm.device.latest_screen = data.latest;
           case 'run':
             if (data.status == 'ready') {
               vm.blockly.running = false;

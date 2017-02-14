@@ -209,6 +209,11 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 'screenshots': screenshots, 
                 'latest': latest_screen
             })
+        elif command == 'autoRefresh':
+            self.write_message({
+                'type': 'image_latest',
+                'latest': latest_screen
+            })
         elif command == 'run':
             if self._run:
                 self.write_message({'type': 'run', 'notify': '运行中'})
