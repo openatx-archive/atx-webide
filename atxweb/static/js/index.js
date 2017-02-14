@@ -428,22 +428,22 @@ var vm = new Vue({
     },
     loadPyManualCode: function() {
       if (!pymaneditor) {
-          return;
+        return;
       }
       var self = this;
       $.ajax({
-          url: '/manual_code',
-          method: 'GET',
-          success: function (data) {
-              notify('读取code数据', 'success');
-              var code = data.man_text;
-              pymaneditor.setValue(data.man_text);
-              pymaneditor.clearSelection();
-          },
-          error: function (e) {
-              console.log('Code加载失败:', e);
-              notify(e.responseTman || 'Code加载失败，请检查服务器连接是否正常', 'warn');
-          },
+        url: '/manual_code',
+        method: 'GET',
+        success: function(data) {
+          notify('读取code数据', 'success');
+          var code = data.man_text;
+          pymaneditor.setValue(data.man_text);
+          pymaneditor.clearSelection();
+        },
+        error: function(e) {
+          console.log('Code加载失败:', e);
+          notify(e.responseTman || 'Code加载失败，请检查服务器连接是否正常', 'warn');
+        },
       });
     },
     checkManualRowImage: function(text) {
@@ -526,7 +526,24 @@ var vm = new Vue({
       var line = pymaneditor.session.getLine(cursor.row);
       var filename = this.manual.contextmenu.img.name.replace(/(\.\d+x\d+)?\.png/, "@auto.png")
       var script = 'd.click_image(u"' + filename + '")\n';
-      if (line !== '') {
+      if (!/^\s*$/.test(line)) {
+        script = line.match(/^\s*/)[0] + script;
+        cursor = { row: cursor.row + 1, column: 0 };
+      }
+      pymaneditor.session.insert(cursor, script);
+      pymaneditor.navigateTo(cursor.row, 0);
+      this.manual.contextmenu.img = null;
+    },
+    onMenuInsertClickNowait: function() {
+      if (!this.manual.contextmenu.img) {
+        return;
+      }
+      var cursor = pymaneditor.getCursorPosition();
+      var line = pymaneditor.session.getLine(cursor.row);
+      var filename = this.manual.contextmenu.img.name.replace(/(\.\d+x\d+)?\.png/, "@auto.png")
+      var script = 'd.click_nowait(u"' + filename + '")\n';
+      if (!/^\s*$/.test(line)) {
+        script = line.match(/^\s*/)[0] + script;
         cursor = { row: cursor.row + 1, column: 0 };
       }
       pymaneditor.session.insert(cursor, script);
@@ -1249,11 +1266,11 @@ $(function() {
     if (evt.movementX == 0 && evt.movementY == 0) {
       return;
     }
-    if (vm.resolution.imgWidth == 0 || vm.resolution.imgHeight ==0) {
+    if (vm.resolution.imgWidth == 0 || vm.resolution.imgHeight == 0) {
       return;
     }
-    vm.resolution.positionX = Math.round(evt.offsetX*vm.resolution.imgWidth/this.width);
-    vm.resolution.positionY = Math.round(evt.offsetY*vm.resolution.imgHeight/this.height);
+    vm.resolution.positionX = Math.round(evt.offsetX * vm.resolution.imgWidth / this.width);
+    vm.resolution.positionY = Math.round(evt.offsetY * vm.resolution.imgHeight / this.height);
 
     var blk = Blockly.selected;
     if (blk == null || blk.type != 'atx_swipe' || swipe_points.start == null) {

@@ -253,6 +253,9 @@ class ManualCodeHandler(tornado.web.RequestHandler):
             '# -*- encoding: utf-8 -*-',
             '#',
             '# Created on: %s\n\n' % time.ctime(),
+            'import os',
+            'import atx\n\n',
+            'd = atx.connect(os.getenv("SERIAL"))',
         ])
         ret['man_text'] = read_file('manual.py', default=default)
         if not os.path.isfile('manual.py'):
