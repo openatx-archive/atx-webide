@@ -188,6 +188,7 @@
       <ul class="dropdown-menu" style="display:block;">
         <li v-bind:class="{'disabled':!overlays.crop_bounds.bound}"><a @click="onMenuReplaceImage">替换为选区图片</a></li>
         <li><a @click="onMenuInsertClickImage">插入click_image</a></li>
+        <li><a @click="onMenuInsertClickNowait">插入click_nowait</a></li>
         <li v-bind:class="{'disabled':!manual.row_image}"><a @click="onMenuReplaceRowImage">替换本行图片</a></li>
         <li><a @click="onMenuDelete">删除</a></li>
       </ul>
