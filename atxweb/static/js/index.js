@@ -415,24 +415,24 @@ var vm = new Vue({
       });
     },
     loadPyManualCode: function() {
-        if (!pymaneditor) {
-            return;
-        }
-        var self = this;
-        $.ajax({
-            url: '/manual_code',
-            method: 'GET',
-            success: function (data) {
-                notify('读取code数据', 'success');
-                var code = data.man_text;
-                pymaneditor.setValue(data.man_text);
-                pymaneditor.clearSelection();
-            },
-            error: function (e) {
-                console.log('Code加载失败:', e);
-                notify(e.responseTman || 'Code加载失败，请检查服务器连接是否正常', 'warn');
-            },
-        });
+      if (!pymaneditor) {
+          return;
+      }
+      var self = this;
+      $.ajax({
+        url: '/manual_code',
+        method: 'GET',
+          success: function (data) {
+            notify('读取code数据', 'success');
+            var code = data.man_text;
+            pymaneditor.setValue(data.man_text);
+            pymaneditor.clearSelection();
+          },
+          error: function (e) {
+            console.log('Code加载失败:', e);
+            notify(e.responseTman || 'Code加载失败，请检查服务器连接是否正常', 'warn');
+          }
+      });
     },
     checkManualRowImage: function(text) {
       var regexp = /[^"]+\.png(?="|')/,
