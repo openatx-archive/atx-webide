@@ -19,9 +19,6 @@
       <!-- left panel -->
       <div id="left-panel" v-bind:style="{'width':(100-layout.right_portion)+'%'}">
         <ul class="nav nav-tabs">
-          <!-- <li v-bind:class="{'active': tab=='blocklyDiv'}"><a @click="switchTab('blocklyDiv')">Blockly</a></li> -->
-          <!-- <li v-bind:class="{'active': tab=='pythonDiv'}"><a @click="switchTab('pythonDiv')">Python</a></li> -->
-          <!-- <li v-bind:class="{'active': tab=='pythonExtDiv'}"><a @click="switchTab('pythonExtDiv')">Exts</a></li> -->
           <li v-bind:class="{'active': tab=='pythonManualDiv'}"><a @click="switchTab('pythonManualDiv')">Coding</a></li>
           <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
           <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
@@ -56,8 +53,8 @@
                 <span class="glyphicon glyphicon-play"></span>运行</a>
             </li>
             <li class="pull-right" @click="loadPyManualCode">
-               <a>
-                 <span class="glyphicon glyphicon-open-file"></span>加载</a>
+              <a>
+                <span class="glyphicon glyphicon-open-file"></span>加载</a>
             </li>
             <li class="pull-right" @click="savePyManualCode">
               <a>
@@ -83,7 +80,7 @@
             <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; overflow-y:auto; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
               <ul class="clearfix">
                 <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
-                  <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
+                  <div style="background-color: img.name == manual.row_image ? 'red' :'transparent'" style="text-align:center">
                     <img src="${img.path}?h=${img.hash}" style="height:50px">
                     <p>${img.name | imagename}</p>
                   </div>
@@ -92,7 +89,7 @@
               <hr/>
               <ul class="clearfix">
                 <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
-                  <div v-bind:style="{'background-color': img.name == manual.row_image ? 'red' :'transparent'}" style="text-align:center">
+                  <div style="background-color: img.name == manual.row_image ? 'red' :'transparent'" style="text-align:center">
                     <img src="${img.path}?h=${img.hash}" style="height:50px">
                     <p>${img.name | imagename}</p>
                   </div>
@@ -119,8 +116,8 @@
       </div>
       <!-- #left-panel -->
       <!-- right-panel -->
-      <div id="right-panel" v-bind:style="{'width':layout.right_portion+'%'}">
-        <h4>Screen<span v-bind:style="{'fontSize': '10px'}">(${resolution.displayMessage})</span>
+      <div id="right-panel" style="width:layout.right_portion+'%'">
+        <h4>Screen<span style="font-size:10px">(${resolution.displayMessage})</span>
             <button type="button" class="btn btn-default btn-xs" @click="saveScreenCrop">保存选区</button>
             <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
             <template v-else>
@@ -129,9 +126,9 @@
             </template>
             <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing || autorefresh">刷新</button>
             <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
-            <span v-bind:style="{'fontSize':'10px', 'text-align':'right'}">(${resolution.positionX}, ${resolution.positionY})</span>
+            <span style="font-size:10px;text-align:right">(${resolution.positionX}, ${resolution.positionY})</span>
           </h4>
-        <div id="screen-wrapper" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}" style="position: relative;">
+        <div id="screen-wrapper" style="width:${canvas_width}+'px';height:${canvas_height}+'px'" style="position: relative;">
           <div id="device-chooser" v-bind:style="{'display': choosing ? 'block' : 'none'}">
             <p>连接设备</p>
             <form>
@@ -196,109 +193,6 @@
       </ul>
     </div>
   </div>
-  <!-- #main-content -->
-  <xml id="toolbox" style="display: none">
-    <category name="ATX" colour="160">
-      <block type="atx_connect"></block>
-      <block type="atx_start_app"></block>
-      <block type="atx_stop_app"></block>
-      <block type="atx_delay"></block>
-      <block type="atx_click"></block>
-      <block type="atx_swipe"></block>
-      <block type="atx_screenshot">
-        <value name="FILENAME">
-          <block type="text">
-            <field name="TEXT">screen.png</field>
-          </block>
-        </value>
-      </block>
-      <block type="atx_keep_screen"></block>
-      <block type="atx_free_screen"></block>
-      <block type="atx_blank"></block>
-    </category>
-    <category name="ATX图片" colour="160">
-      <block type="atx_click_image">
-      </block>
-      <block type="atx_wait">
-      </block>
-      <block type="atx_exists">
-      </block>
-      <block type="atx_image_file">
-      </block>
-      <block type="atx_image_pattern">
-        <value name="FILENAME">
-          <block type="atx_image_file"></block>
-        </value>
-      </block>
-      <block type="atx_image_pattern_offset">
-        <value name="FILENAME">
-          <block type="atx_image_crop_preview">
-            <value name="IMAGE_CROP">
-              <block type="atx_image_crop"></block>
-            </value>
-          </block>
-        </value>
-      </block>
-    </category>
-    <category name="逻辑" colour="210">
-      <block type="controls_if"></block>
-      <block type="logic_compare"></block>
-      <block type="logic_operation"></block>
-      <block type="logic_negate"></block>
-      <block type="logic_boolean"></block>
-      <block type="logic_null" disabled="true"></block>
-    </category>
-    <category name="循环" colour="120">
-      <block type="controls_repeat_ext">
-        <value name="TIMES">
-          <shadow type="math_number">
-            <field name="NUM">10</field>
-          </shadow>
-        </value>
-      </block>
-      <block type="controls_repeat"></block>
-      <block type="controls_whileUntil"></block>
-      <block type="controls_forEach"></block>
-      <block type="controls_flow_statements"></block>
-    </category>
-    <category name="变量" colour="330">
-      <block type="variables_set"></block>
-      <block type="variables_get"></block>
-      <block type="math_number"></block>
-      <block type="math_arithmetic"></block>
-      <block type="math_random_int">
-        <value name="FROM">
-          <shadow type="math_number">
-            <field name="NUM">1</field>
-          </shadow>
-        </value>
-        <value name="TO">
-          <shadow type="math_number">
-            <field name="NUM">100</field>
-          </shadow>
-        </value>
-      </block>
-      <block type="math_random_float"></block>
-      <block type="text"></block>
-      <block type="lists_create_with">
-        <mutation items="0"></mutation>
-      </block>
-      <block type="lists_create_with"></block>
-    </category>
-    <category name="常用" colour="240">
-      <block type="text_print">
-        <value name="TEXT">
-          <shadow type="text">
-            <field name="TEXT">abc</field>
-          </shadow>
-        </value>
-      </block>
-      <block type="time_sleep"></block>
-      <block type="time_time"></block>
-    </category>
-    <category name="扩展" colour="100">
-    </category>
-  </xml>
   <!-- jquery -->
   <script src="{{static_url('libs/jquery/jquery-1.11.3.min.js')}}"></script>
   <script src="{{static_url('libs/bootstrap-3.3.7/js/bootstrap.min.js')}}"></script>
