@@ -127,11 +127,6 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         self.write_message({'type': 'console', 'output': text})
 
     @run_on_executor
-    def background_task(self, code):
-        self.write_message({'type': 'run', 'status': 'running'})
-        return True
-    
-    @run_on_executor
     def run_python_code(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
         filename = '__tmp.py'
@@ -141,9 +136,10 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         env = os.environ.copy()
         print atx_settings
         env['SERIAL'] = atx_settings.get('device_url', '')
+        start_time = time.time()
         self._proc = subprocess.Popen(['python', '-u', filename],
             bufsize=1,
-            env = env,
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
         for line in iter(self._proc.stdout.readline, b''):
@@ -151,7 +147,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
 
         exit_code = self._proc.wait()
         print("Return: %d" % exit_code)
-        self.write_console("exit code %d\n" % exit_code)
+        cost_time = time.time() - start_time
+        self.write_console("[Finished in %.1fs, exit code %d]\n" % (cost_time, exit_code))
         self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束'})
 
     @tornado.gen.coroutine
@@ -191,7 +188,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 'latest': latest_screen
             })
         elif command == 'stop':
-            self._proc.terminate()
+            if self._proc:
+                self._proc.terminate()
             self.write_message({'type': 'run', 'notify': '停止中'})
         elif command == 'run':
             self.write_message({'type': 'run', 'notify': '开始运行'})
