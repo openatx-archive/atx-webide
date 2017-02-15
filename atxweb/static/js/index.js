@@ -434,6 +434,14 @@ var vm = new Vue({
           }
       });
     },
+    toggleManualVimMode: function() {
+      this.manual.vimmode = !this.manual.vimmode;
+      if (this.manual.vimmode) {
+        pymaneditor.setKeyboardHandler('ace/keyboard/vim');
+      } else {
+        pymaneditor.setKeyboardHandler();
+      }
+    },
     checkManualRowImage: function(text) {
       var regexp = /[^"]+\.png(?="|')/,
         m = regexp.exec(text);
