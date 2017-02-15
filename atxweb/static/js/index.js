@@ -183,7 +183,7 @@ var vm = new Vue({
         error: function(e) {
           console.log('Workspace保存失败:\n', e);
           notify(e.responseText || '保存失败，请检查服务器连接是否正常', 'warn');
-        },
+        }
       });
     },
     runBlockly: function() {
@@ -210,7 +210,6 @@ var vm = new Vue({
       ws.send(JSON.stringify({ command: "run", code: code }));
     },
     stopBlockly: function() {
-      console.log('stop');
       ws.send(JSON.stringify({ command: "stop", code: this.blockly.pythonDebugText }));
     },
     getDeviceChoices: function() {
@@ -249,7 +248,7 @@ var vm = new Vue({
         method: 'POST',
         dataType: 'json',
         data: {
-          serial: serial,
+          serial: serial
         },
         success: function(data) {
           notify('连接成功, 刷新中..', 'success');
@@ -392,9 +391,6 @@ var vm = new Vue({
       this.manual.running = true;
       ws.send(JSON.stringify({ command: "run", code: code }));
     },
-    runPyManualCodeSelected: function() {
-      notify('Not Implemented yet.', 'error');
-    },
     stopPyManualCode: function() {
       ws.send(JSON.stringify({ command: "stop" }));
     },
@@ -418,14 +414,6 @@ var vm = new Vue({
         },
       });
     },
-    toggleManualVimMode: function() {
-      this.manual.vimmode = !this.manual.vimmode;
-      if (this.manual.vimmode) {
-        pymaneditor.setKeyboardHandler('ace/keyboard/vim');
-      } else {
-        pymaneditor.setKeyboardHandler();
-      }
-    },
     loadPyManualCode: function() {
       if (!pymaneditor) {
         return;
@@ -434,17 +422,25 @@ var vm = new Vue({
       $.ajax({
         url: '/manual_code',
         method: 'GET',
-        success: function(data) {
+        success: function (data) {
           notify('读取code数据', 'success');
           var code = data.man_text;
           pymaneditor.setValue(data.man_text);
           pymaneditor.clearSelection();
         },
-        error: function(e) {
+        error: function (e) {
           console.log('Code加载失败:', e);
           notify(e.responseTman || 'Code加载失败，请检查服务器连接是否正常', 'warn');
-        },
+        }
       });
+    },
+    toggleManualVimMode: function() {
+      this.manual.vimmode = !this.manual.vimmode;
+      if (this.manual.vimmode) {
+        pymaneditor.setKeyboardHandler('ace/keyboard/vim');
+      } else {
+        pymaneditor.setKeyboardHandler();
+      }
     },
     checkManualRowImage: function(text) {
       var regexp = /[^"]+\.png(?="|')/,
@@ -899,10 +895,7 @@ $(function() {
   window.blocklyCropImageList = null;
   Blockly.Python.addReservedWords('highlight_block');
   goog.asserts.ENABLE_ASSERTS = true;
-  workspace = Blockly.inject(document.getElementById('blocklyDiv'), {
-    toolbox: document.getElementById('toolbox'),
-    media: '/static/blockly/media/',
-  });
+  workspace = Blockly.inject(document.getElementById('blocklyDiv'));
 
   var screenURL = '/images/screenshot?v=t' + new Date().getTime();
 
