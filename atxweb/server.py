@@ -319,6 +319,15 @@ class DeviceHandler(tornado.web.RequestHandler):
             info = device.info
         self.write({'status': 'ok', 'info': info})
 
+class ConsoleHandler(tornado.web.RequestHandler):
+
+    def post(self):
+        code = self.get_argument('code')
+        filename = self.get_argument('filename').encode(locale.getpreferredencoding(), 'ignore')
+        with open (filename+'.log', 'w') as f:
+            f.write(code)
+        self.write({'status': 'ok'})
+
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
         path = path.encode(base.SYSTEM_ENCODING) # fix for windows
@@ -336,6 +345,7 @@ def make_app(settings={}):
         (r'/api/images', ImageHandler),
         (r'/device', DeviceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
+        (r'/console/log', ConsoleHandler),
     ], **settings)
     return application
 

@@ -109,9 +109,15 @@
         </div>
         <div v-show="layout.right_portion<=50">
           <h4>Console
-              <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
-            </h4>
-          <pre class='console'></pre>
+            <button type="button" @click="downloadConsole" class="btn btn-default btn-xs btn-download-console">Download</button>
+            <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+            <button v-if="console.display" type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Hide</button>
+            <button v-else type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Display</button>
+          </h4>
+          <pre class='console' id="pyconsole"></pre>
+        </div>
+        <div id="console-resize-handle" v-bind:style="{'left':50+'px','top':layout.height-10+'px'}">
+          <img src="{{static_url('arrows_drag_vert.png')}}" style="width:5%;height:5%;">
         </div>
       </div>
       <!-- #left-panel -->
@@ -173,8 +179,11 @@
         <!-- #screen-wrapper -->
         <div v-show="layout.right_portion>50">
           <h4>Console
-              <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
-            </h4>
+            <button type="button" @click="downloadConsole" class="btn btn-default btn-xs btn-download-console">Download</button>
+            <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+            <button v-if="console.display" type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Hide</button>
+            <button v-else type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Display</button>
+          </h4>
           <pre class='console'></pre>
         </div>
       </div>
