@@ -100,7 +100,7 @@ var vm = new Vue({
       crop_bounds: { bound: null }, // null
       click_point: {}, // atx_click
       rect_bounds: {}, // atx_click_image
-      swipe_points: {}, // atx_swipe
+      swipe_points: {} // atx_swipe
     },
     manual: {
       dirty: false,
@@ -114,16 +114,23 @@ var vm = new Vue({
       contextmenu: {
         left: 0,
         top: 0,
-        img: null,
-      },
+        img: null
+      }
     },
     resolution: {
       imgWidth: 0,
       imgHeight: 0,
       positionX: 0,
       positionY: 0,
-      displayMessage: "0x0",
+      displayMessage: "0x0"
     },
+    console: {
+      code: null,
+      filename: "console.log",
+      display: true,
+      width: 0,
+      height: 0
+    }
   },
   computed: {
     canvas_width: function() {
@@ -374,6 +381,44 @@ var vm = new Vue({
     },
     clearConsole: function() {
       $('pre.console').html('');
+    },
+    toggleConsole: function() {
+      $('pre.console').toggle();
+      if (this.console.display) {
+        this.console.display = false;
+      } else {
+        this.console.display = true;
+      }
+    },
+    downloadConsole: function () {
+      var code = $('pre.console')[0].innerText;
+      if (code == '') {
+        notify('没有log!', 'warn');
+        return;
+      }
+      var filename = window.prompt('保存的文件名, 不需要输入.log扩展名');
+      if (!filename) {
+        return;
+      }
+      if (filename.substr(-4, 4) == '.log') {
+        filename = filename.substr(0, filename.length - 4);
+      }
+      var self = this;
+      $.ajax({
+        url: '/console/log',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          'code': code,
+          'filename': filename
+        },
+        success: function(res) {
+          notify('log保存成功', 'success');
+        },
+        error: function(err) {
+          notify('log保存失败', 'error');
+        }
+      });
     },
     runPyManualCode: function() {
       if (this.manual.dirty) { this.savePyManualCode(); }
@@ -1502,6 +1547,14 @@ $(function() {
       var p = 1 - (evt.originalEvent.pageX - 30) / (vm.layout.width - 60);
       vm.layout.right_portion = Math.min(55, Math.max(parseInt(p * 100), 25));
       vm.layout.width = $('#main-content').width() + 30; // with margin 15+15
+    });
+    $('#console-resize-handle').on('drag', function(evt) {
+      var offsetY = evt.originalEvent.offsetY;
+      if (Math.abs(offsetY) <= 2 || Math.abs(offsetY) >= 200) {
+        return;
+      }
+      var consoleHeight = $('#pyconsole').height();
+      $('#pyconsole').height(consoleHeight + offsetY);
     });
   }
   setupResizeHandle();
