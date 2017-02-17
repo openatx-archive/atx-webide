@@ -6,6 +6,7 @@ import sys
 import logging
 import webbrowser
 import socket
+import subprocess
 import time
 import json
 import traceback
@@ -120,58 +121,38 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         log.info("WebSocket connected")
         self.write_message({'type': 'open'})
         self._run = False
+        self._proc = None
 
-    def _highlight_block(self, id):
-        self.write_message({'type': 'highlight', 'id': id})
-        if not self._run:
-            raise RuntimeError("stopped")
-        else:
-            time.sleep(.1)
-
-    def write_console(self, s):
-        self.write_message({'type': 'console', 'output': s})
-
-    def run_blockly(self, code):
-        filename = '__tmp.py'
-        fake_sysout = FakeStdout(self.write_console)
-
-        __sysout = sys.stdout
-        sys.stdout = fake_sysout # TODOs
-        self.write_message({'type': 'console', 'output': '# '+time.strftime('%H:%M:%S') + ' start running\n'})
-        try:
-            # python code always UTF-8
-            code = code.encode('utf-8')
-
-            if device is None:
-                raise RuntimeError('No Device!')
-
-            exec code in {
-                'd': device,
-                'atx': atx,
-                'os': os,
-                'highlight_block': self._highlight_block,
-                '__name__': '__main__',
-                '__file__': filename}
-        except RuntimeError as e:
-            if str(e) == 'stopped':
-                print 'Program stopped'
-                return
-            self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
-        except SystemExit:
-            pass
-        except Exception as e:
-            self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
-        finally:
-            self._run = False
-            self.write_message({'type': 'run', 'status': 'ready'})
-            self.write_message({'type': 'console', 'output': '# '+time.strftime('%H:%M:%S') + ' stop running\n ------------------ \n'})
-            sys.stdout = __sysout
+    def write_console(self, text):
+        self.write_message({'type': 'console', 'output': text})
 
     @run_on_executor
     def background_task(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
-        self.run_blockly(code)
         return True
+    
+    @run_on_executor
+    def run_python_code(self, code):
+        self.write_message({'type': 'run', 'status': 'running'})
+        filename = '__tmp.py'
+        with open(filename, 'wb') as f:
+            f.write(code.encode('utf-8'))
+
+        env = os.environ.copy()
+        print atx_settings
+        env['SERIAL'] = atx_settings.get('device_url', '')
+        self._proc = subprocess.Popen(['python', '-u', filename],
+            bufsize=1,
+            env = env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT)
+        for line in iter(self._proc.stdout.readline, b''):
+            self.write_console(line)
+
+        exit_code = self._proc.wait()
+        print("Return: %d" % exit_code)
+        self.write_console("exit code %d\n" % exit_code)
+        self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束'})
 
     @tornado.gen.coroutine
     def on_message(self, message_text):
@@ -194,13 +175,13 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 name = os.path.basename(name).split('@')[0]
                 if realpath.startswith('screenshots/'):
                     screenshots.append({
-                        'name': name, 
+                        'name': name,
                         'path': realpath
                     })
                 else:
                     images.append({
-                        'name': name, 
-                        'path': realpath, 
+                        'name': name,
+                        'path': realpath,
                         'hash': '{}'.format(os.path.getmtime(realpath)).replace('.', '-')
                     })
             self.write_message({
@@ -210,16 +191,12 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 'latest': latest_screen
             })
         elif command == 'stop':
-            self._run = False
+            self._proc.terminate()
             self.write_message({'type': 'run', 'notify': '停止中'})
         elif command == 'run':
-            if self._run:
-                self.write_message({'type': 'run', 'notify': '运行中'})
-                return
-            self._run = True
             self.write_message({'type': 'run', 'notify': '开始运行'})
-            res = yield self.background_task(message.get('code'))
-            self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束', 'result': res})
+            code = message.get('code')
+            yield self.run_python_code(code)
         else:
             self.write_message(u"You said: " + message)
 
@@ -253,6 +230,9 @@ class ManualCodeHandler(tornado.web.RequestHandler):
             '# -*- encoding: utf-8 -*-',
             '#',
             '# Created on: %s\n\n' % time.ctime(),
+            'import os',
+            'import atx\n\n',
+            'd = atx.connect(os.getenv("SERIAL"))',
         ])
         ret['man_text'] = read_file('manual.py', default=default)
         if not os.path.isfile('manual.py'):
@@ -324,6 +304,7 @@ class DeviceHandler(tornado.web.RequestHandler):
 
         # wrapping args, should be in drivers? identifier?
         settings = {}
+        atx_settings['device_url'] = serial.encode('utf-8') # used in set env-var SERIAL
         if serial.startswith('http://'):
             settings['platform'] = platform = 'ios'
             settings['device_url'] = serial
