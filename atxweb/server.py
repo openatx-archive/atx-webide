@@ -206,22 +206,6 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-
-class WorkspaceHandler(tornado.web.RequestHandler):
-    def get(self):
-        ret = {}
-        ret['xml_text'] = read_file('blockly.xml', default='<xml xmlns="http://www.w3.org/1999/xhtml"></xml>')
-        ret['python_text'] = read_file('blockly.py')
-        self.write(ret)
-
-    def post(self):
-        log.info("Save workspace")
-        xml_text = self.get_argument('xml_text')
-        python_text = self.get_argument('python_text')
-        write_file('blockly.xml', xml_text)
-        write_file('blockly.py', python_text)
-
-
 class ManualCodeHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -341,7 +325,6 @@ def make_app(settings={}):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r'/ws', DebugWebSocket), # code debug
-        (r"/workspace", WorkspaceHandler), # save and write workspace
         (r"/manual_code", ManualCodeHandler), # save and write py code
         (r"/images/screenshot", ScreenshotHandler),
         (r'/api/images', ImageHandler),
