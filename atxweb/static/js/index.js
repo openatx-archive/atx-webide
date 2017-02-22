@@ -708,7 +708,7 @@ $(function() {
             return;
           }
           callback(null, vm.images.map(function(img) {
-            return { value: '"' + img.name + '"', score: 1, meta: 'image' };
+            return { value: '"' + '_pattern/' + img.name + '"', score: 1, meta: 'image' };
           }));
         }
       };

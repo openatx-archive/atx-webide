@@ -39,7 +39,7 @@ log = logutils.getLogger("webide", level=logging.DEBUG)
 log.setLevel(logging.DEBUG)
 
 
-IMAGE_PATH = ['.', 'imgs', 'images']
+IMAGE_PATH = ['.', 'imgs', 'images', '_pattern']
 device = None
 atx_settings = {}
 latest_screen = ''
@@ -255,7 +255,9 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         l, t, r, b = map(int, bound)
         image = imutils.open(screenname)
         image = imutils.crop(image, l, t, r, b)
-        cv2.imwrite(filename, image)
+        if not os.path.exists(u'_pattern'):
+            os.makedirs(u'_pattern')
+        cv2.imwrite(u'_pattern/' + filename, image)
         self.write({'status': 'ok'})
 
 class DeviceHandler(tornado.web.RequestHandler):
