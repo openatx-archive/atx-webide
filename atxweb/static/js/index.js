@@ -118,8 +118,8 @@ var vm = new Vue({
       code: null,
       filename: "console.log",
       display: true,
-      width: 0,
-      height: 0
+      editorHeight: 0,
+      consoleHeight: 0
     }
   },
   computed: {
@@ -961,12 +961,31 @@ $(function() {
       vm.layout.width = $('#main-content').width() + 30; // with margin 15+15
     });
     $('#console-resize-handle').on('drag', function(evt) {
-      var offsetY = evt.originalEvent.offsetY;
-      if (Math.abs(offsetY) <= 2 || Math.abs(offsetY) >= 200) {
+      var pageHeight = document.body.clientHeight;
+      var handlePosTop = $('#console-resize-handle').position().top;
+      var editorHeight = $('#python-man-editor').height();
+      var consoleHeight = $('#pyconsole').height();
+      if (vm.console.editorHeight == 0) {
+        vm.console.editorHeight = editorHeight;
+      }
+      if (vm.console.consoleHeight == 0) {
+        vm.console.consoleHeight = consoleHeight;
+      }
+      var y = evt.originalEvent.offsetY;
+      var bottom = pageHeight - 150 - editorHeight - consoleHeight;
+      if (Math.abs(y) > bottom) {
         return;
       }
-      var consoleHeight = $('#pyconsole').height();
-      $('#pyconsole').height(consoleHeight + offsetY);
+      if (handlePosTop > pageHeight - 80) {
+        $('#console-resize-handle').position().top = pageHeight - 80;
+        if (editorHeight - y <= vm.console.editorHeight) {
+          $('#python-man-editor').height(editorHeight - y);
+        }
+        $('#pyconsole').height(consoleHeight + y);
+        return;
+      } else {
+        $('#pyconsole').height(consoleHeight + y);
+      }
     });
   }
   setupResizeHandle();
