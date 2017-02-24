@@ -116,7 +116,7 @@
             <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
             <span style="font-size:10px;text-align:right">(${resolution.positionX}, ${resolution.positionY})</span>
           </h4>
-        <div id="screen-wrapper" style="width:${canvas_width}+'px';height:${canvas_height}+'px'" style="position: relative;">
+        <div id="screen-wrapper" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}" style="position: relative;">
           <div id="device-chooser" v-bind:style="{'display': choosing ? 'block' : 'none'}">
             <p>连接设备</p>
             <form>

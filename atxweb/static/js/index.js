@@ -904,8 +904,8 @@ $(function() {
       $rect = $("#screen-crop");
     }
     // update rect position
-    var left = bounds.start.pageX - rect.left + 20,
-      top = bounds.start.pageY - rect.top + 50,
+    var left = bounds.start.pageX - rect.left,
+      top = bounds.start.pageY - rect.top,
       width = Math.max(bounds.end.pageX - bounds.start.pageX, 10),
       height = Math.max(bounds.end.pageY - bounds.start.pageY, 10);
     $rect.show();
