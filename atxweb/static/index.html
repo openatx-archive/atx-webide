@@ -107,6 +107,7 @@
       <div id="right-panel" style="width:layout.right_portion+'%'">
         <h4>Screen<span style="font-size:10px">(${resolution.displayMessage})</span>
             <button type="button" class="btn btn-default btn-xs" @click="saveScreenCrop">保存选区</button>
+            <button type="button" class="btn btn-default btn-xs" @click="setScreenCropFolder">设置目录</button>
             <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
             <template v-else>
               <button v-if="choosing" type="button" class="btn btn-default btn-xs" @click="openChooseDevice">刷新设备</button>
