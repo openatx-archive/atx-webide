@@ -40,6 +40,7 @@ log.setLevel(logging.DEBUG)
 
 
 IMAGE_PATH = ['.', 'imgs', 'images']
+screen_crop_folder = {}
 device = None
 atx_settings = {}
 latest_screen = ''
@@ -169,6 +170,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 realpath = name.replace('\\', '/') # fix for windows
                 if realpath.startswith('./'):
                     realpath = realpath[2:]
+                directory = os.path.dirname(name)
                 name = os.path.basename(name).split('@')[0]
                 if realpath.startswith('screenshots/'):
                     screenshots.append({
@@ -179,6 +181,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                     images.append({
                         'name': name,
                         'path': realpath,
+                        'screen_crop_folder': directory,
                         'hash': '{}'.format(os.path.getmtime(realpath)).replace('.', '-')
                     })
             self.write_message({
@@ -226,6 +229,30 @@ class ManualCodeHandler(tornado.web.RequestHandler):
         python_text = self.get_argument('python_text')
         write_file('manual.py', python_text)
 
+
+class ScreenCropFolderHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        if self.request.remote_ip not in screen_crop_folder:
+            screen_crop_folder[self.request.remote_ip] = '.'
+        self.write(screen_crop_folder.get(self.request.remote_ip))
+
+    def post(self):
+        foldername = self.get_argument('foldername')
+        if foldername:
+            if not os.path.exists(foldername):
+                try:
+                    os.makedirs(foldername)
+                except Exception, e:
+                    print 'error in create image folder: ', e
+                    return
+            screen_crop_folder[self.request.remote_ip] = foldername
+            global IMAGE_PATH
+            if foldername not in IMAGE_PATH:
+                IMAGE_PATH.append(foldername)
+            self.write({'status': 'ok'})
+            return
+
 class ScreenshotHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -253,7 +280,9 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         l, t, r, b = map(int, bound)
         image = imutils.open(screenname)
         image = imutils.crop(image, l, t, r, b)
-        cv2.imwrite(filename, image)
+        if self.request.remote_ip not in screen_crop_folder:
+            screen_crop_folder[self.request.remote_ip] = '.'
+        cv2.imwrite(os.path.join(screen_crop_folder[self.request.remote_ip], filename), image)
         self.write({'status': 'ok'})
 
 class DeviceHandler(tornado.web.RequestHandler):
@@ -325,6 +354,7 @@ def make_app(settings={}):
         (r'/ws', DebugWebSocket), # code debug
         (r"/manual_code", ManualCodeHandler), # save and write py code
         (r"/images/screenshot", ScreenshotHandler),
+        (r"/images/screencropfolder", ScreenCropFolderHandler),
         (r'/api/images', ImageHandler),
         (r'/device', DeviceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),

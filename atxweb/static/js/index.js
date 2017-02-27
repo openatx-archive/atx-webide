@@ -256,6 +256,30 @@ var vm = new Vue({
       });
       img.src = url;
     },
+    setScreenCropFolder: function () {
+      var foldername = window.prompt('保存文件的目录名称，默认为项目根目录！');
+      if (!foldername) {
+        return;
+      }
+      var self = this;
+      $.ajax({
+        url: '/images/screencropfolder',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          foldername: foldername
+        },
+        success: function(res) {
+          // console.log(res);
+          notify('目录设置成功', 'success');
+          ws.send(JSON.stringify({ command: "refresh" }));
+        },
+        error: function(err) {
+          console.log('目录设置失败:\n', err);
+          notify('目录设置失败，打开调试窗口查看具体问题', 'error');
+        }
+      });
+    },
     saveScreenCrop: function() {
       if (this.device.latest_screen == '') {
         notify('图片列表尚未刷新!', 'warn');
@@ -710,7 +734,11 @@ $(function() {
             return;
           }
           callback(null, vm.images.map(function(img) {
-            return { value: '"' + img.name + '"', score: 1, meta: 'image' };
+            if (img.screen_crop_folder == '.') {
+              return { value: '"' + img.name + '"', score: 1, meta: 'image' };
+            } else {
+              return { value: '"' + img.screen_crop_folder + '/' + img.name + '"', score: 1, meta: 'image' };
+            }
           }));
         }
       };
@@ -784,7 +812,7 @@ $(function() {
             for (var i = 0, info; i < data.images.length; i++) {
               info = data.images[i];
               window.blocklyImageList.push([info['name'], info['path']]);
-              vm.images.push({ name: info['name'], path: window.blocklyBaseURL + info['path'], hash: info['hash'] });
+              vm.images.push({ name: info['name'], path: window.blocklyBaseURL + info['path'], screen_crop_folder: info['screen_crop_folder'] ,hash: info['hash'] });
             }
             window.blocklyCropImageList = [];
             for (var i = 0, info; i < data.screenshots.length; i++) {
@@ -906,8 +934,8 @@ $(function() {
       $rect = $("#screen-crop");
     }
     // update rect position
-    var left = bounds.start.pageX - rect.left + 20,
-      top = bounds.start.pageY - rect.top + 50,
+    var left = bounds.start.pageX - rect.left,
+      top = bounds.start.pageY - rect.top,
       width = Math.max(bounds.end.pageX - bounds.start.pageX, 10),
       height = Math.max(bounds.end.pageY - bounds.start.pageY, 10);
     $rect.show();
