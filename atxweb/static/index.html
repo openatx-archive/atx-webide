@@ -34,13 +34,27 @@
               <a>
                 <span class="glyphicon glyphicon-play"></span>运行</a>
             </li>
+            <li class="pull-right" @click="savePyManualCode">
+              <a>
+                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+            </li>
             <li class="pull-right" @click="loadPyManualCode">
               <a>
                 <span class="glyphicon glyphicon-open-file"></span>加载</a>
             </li>
-            <li class="pull-right" @click="savePyManualCode">
+            <li class="pull-right" @click="createCodeFile">
               <a>
-                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+                <span class="glyphicon glyphicon-file"></span>新建</a>
+            </li>
+            <li class="pull-right">
+              <a>
+                <span>当前文件：</span>
+                <select v-model="manual.selected" @change="changeFileItem(rowId, $event)">
+                  <option v-for="option in manual.options" v-bind:value="option.value">
+                    ${ option.value }
+                  </option>
+                </select>
+              </a>
             </li>
             <li class="pull-right" @click='toggleManualVimMode'><a>VimMode: ${ manual.vimmode ? 'ON' : 'OFF'}</a></li>
           </template>
