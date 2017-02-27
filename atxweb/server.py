@@ -40,6 +40,7 @@ log.setLevel(logging.DEBUG)
 
 
 IMAGE_PATH = ['.', 'imgs', 'images']
+SERVER_FILE = ['__init__.py', '__main__.py', '__tmp.py', 'server.py']
 screen_crop_folder = {}
 device = None
 atx_settings = {}
@@ -209,25 +210,52 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
 
 class ManualCodeHandler(tornado.web.RequestHandler):
 
-    def get(self):
-        ret = {}
-        default = '\n'.join([
-            '# -*- encoding: utf-8 -*-',
-            '#',
-            '# Created on: %s\n\n' % time.ctime(),
-            'import os',
-            'import atx\n\n',
-            'd = atx.connect(os.getenv("SERIAL"))',
-        ])
-        ret['man_text'] = read_file('manual.py', default=default)
-        if not os.path.isfile('manual.py'):
-            write_file('manual.py', default)
-        self.write(ret)
-
     def post(self):
-        log.info('Save manual code')
-        python_text = self.get_argument('python_text')
-        write_file('manual.py', python_text)
+        filename = self.get_argument('filename').encode(locale.getpreferredencoding(), 'ignore')
+        if self.get_argument('option') == 'create':
+            if not os.path.exists(filename + '.py'):
+                try:
+                    f = open(filename + '.py', 'a')
+                    default = '\n'.join([
+                        '# -*- encoding: utf-8 -*-',
+                        '#',
+                        '# Created on: %s\n\n' % time.ctime(),
+                        'import os',
+                        'import atx\n\n',
+                        'd = atx.connect(os.getenv("SERIAL"))',
+                    ])
+                    f.write(default)
+                    self.write({'status': 'ok', 'msg': 'success'})
+                except Exception, e:
+                    log.error('error in create code file: ', e)
+                    self.write({'status': 'error', 'msg': 'error'})
+            else:
+                self.write({'status': 'ok', 'msg': 'already exists'})
+        elif self.get_argument('option') == 'save':
+            log.info('Save manual code')
+            python_text = self.get_argument('python_text')
+            write_file(filename, python_text)
+        elif self.get_argument('option') == 'load':
+            ret = {}
+            default = '\n'.join([
+                '# -*- encoding: utf-8 -*-',
+                '#',
+                '# Created on: %s\n\n' % time.ctime(),
+                'import os',
+                'import atx\n\n',
+                'd = atx.connect(os.getenv("SERIAL"))',
+            ])
+            ret['man_text'] = read_file(filename, default=default)
+            if not os.path.isfile(filename):
+                write_file(filename, default)
+            ret['code_file'] = []
+            global SERVER_FILE
+            for f in os.listdir('.'):
+                if f not in SERVER_FILE and f.endswith('.py') and f != 'manual.py':
+                    ret['code_file'].append(f)
+            self.write(ret)
+        else:
+            log.info(self.get_argument('option'))
 
 
 class ScreenCropFolderHandler(tornado.web.RequestHandler):

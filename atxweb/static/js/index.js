@@ -93,10 +93,10 @@ var vm = new Vue({
       swipe_points: {} // atx_swipe
     },
     manual: {
+      filename: 'manual.py',
       dirty: false,
       pythonText: '',
       vimmode: false,
-      selected: null,
       running: false,
       cursor: null,
       row_image: null,
@@ -105,7 +105,11 @@ var vm = new Vue({
         left: 0,
         top: 0,
         img: null
-      }
+      },
+      selected: 'manual.py',
+      options: [
+        { text: '默认', value: 'manual.py'}
+      ]
     },
     resolution: {
       imgWidth: 0,
@@ -392,6 +396,11 @@ var vm = new Vue({
     stopPyManualCode: function() {
       ws.send(JSON.stringify({ command: "stop" }));
     },
+    changeFileItem: function (rowId, event) {
+      this.manual.selected = event.target.value;
+      this.manual.filename = event.target.value;
+      this.loadPyManualCode();
+    },
     savePyManualCode: function() {
       if (!pymaneditor) {
         return;
@@ -401,7 +410,11 @@ var vm = new Vue({
       $.ajax({
         url: '/manual_code',
         method: 'POST',
-        data: { 'python_text': self.manual.pythonText },
+        data: {
+          'option': 'save',
+          'filename': self.manual.filename,
+          'python_text': self.manual.pythonText
+        },
         success: function(data) {
           notify('Code保存成功', 'success');
           self.manual.dirty = false;
@@ -412,6 +425,39 @@ var vm = new Vue({
         },
       });
     },
+    createCodeFile: function() {
+      var filename = window.prompt('代码文件的名称！');
+      if (!filename) {
+        return;
+      }
+      if (filename.substr(-3, 3) == '.py') {
+        filename = filename.substr(0, filename.length - 3);
+      }
+      var self = this;
+      $.ajax({
+        url: '/manual_code',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          'option': 'create',
+          'filename': filename
+        },
+        success: function(res) {
+          if (res.msg == 'success') {
+            notify('新建文件成功', 'success');
+          } else {
+            notify('文件已经存在', 'already exists');
+          }
+          self.manual.filename = filename + '.py';
+          self.manual.options.push({'text': '', 'value': filename + '.py'});
+          ws.send(JSON.stringify({ command: "refresh" }));
+        },
+        error: function(err) {
+          console.log('新建文件失败:\n', err);
+          notify('新建文件失败，打开调试窗口查看具体问题', 'error');
+        }
+      });
+    },
     loadPyManualCode: function() {
       if (!pymaneditor) {
         return;
@@ -419,12 +465,30 @@ var vm = new Vue({
       var self = this;
       $.ajax({
         url: '/manual_code',
-        method: 'GET',
-        success: function(data) {
+        method: 'POST',
+        data: {
+          'option': 'load',
+          'filename': self.manual.filename
+        },
+        success: function (data) {
           notify('读取code数据', 'success');
           var code = data.man_text;
           pymaneditor.setValue(data.man_text);
           pymaneditor.clearSelection();
+
+          if (data['code_file'] != null) {
+            for (var f in data['code_file']) {
+              var isExist = false;
+              for (var l in self.manual.options) {
+                if (l.value == data['code_file'][f]) {
+                  isExist = true;
+                }
+              }
+              if (!isExist) {
+                self.manual.options.push({'text': '', 'value': data['code_file'][f]});
+              }
+            }
+          }
         },
         error: function(e) {
           console.log('Code加载失败:', e);
@@ -778,25 +842,12 @@ $(function() {
     }); // loadModule done: language_tools
   }
 
-  function restoreManualCode() {
-    $.get('/manual_code')
-      .success(function(res) {
-        vm.manual.pythonText = res.man_text;
-        pymaneditor.setValue(res.man_text);
-        pymaneditor.clearSelection();
-      })
-      .error(function(res) {
-        alert(res.responseText);
-      })
-  }
-
   function connectWebsocket() {
     ws = new WebSocket('ws://' + location.host + '/ws')
-
     ws.onopen = function() {
       ws.send(JSON.stringify({ command: "refresh" }))
       notify('与后台通信连接成功!!!');
-      restoreManualCode();
+      vm.loadPyManualCode();
     };
     ws.onmessage = function(evt) {
       try {
