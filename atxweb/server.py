@@ -235,13 +235,11 @@ class ManualCodeHandler(tornado.web.RequestHandler):
 class ScreenCropFolderHandler(tornado.web.RequestHandler):
 
     def get(self):
-        global screen_crop_folder
         if self.request.remote_ip not in screen_crop_folder:
             screen_crop_folder[self.request.remote_ip] = '.'
         self.write(screen_crop_folder.get(self.request.remote_ip))
 
     def post(self):
-        global screen_crop_folder
         foldername = self.get_argument('foldername')
         if foldername:
             if not os.path.exists(foldername):
@@ -284,7 +282,6 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         l, t, r, b = map(int, bound)
         image = imutils.open(screenname)
         image = imutils.crop(image, l, t, r, b)
-        global screen_crop_folder
         if self.request.remote_ip not in screen_crop_folder:
             screen_crop_folder[self.request.remote_ip] = '.'
         cv2.imwrite(os.path.join(screen_crop_folder[self.request.remote_ip], filename), image)
