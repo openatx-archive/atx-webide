@@ -732,10 +732,10 @@ $(function() {
             return;
           }
           callback(null, vm.images.map(function(img) {
-            if (img.screenCropFolder == '.') {
+            if (img.screen_crop_folder == '.') {
               return { value: '"' + img.name + '"', score: 1, meta: 'image' };
             } else {
-              return { value: '"' + img.screenCropFolder + '/' + img.name + '"', score: 1, meta: 'image' };
+              return { value: '"' + img.screen_crop_folder + '/' + img.name + '"', score: 1, meta: 'image' };
             }
           }));
         }
@@ -810,7 +810,7 @@ $(function() {
             for (var i = 0, info; i < data.images.length; i++) {
               info = data.images[i];
               window.blocklyImageList.push([info['name'], info['path']]);
-              vm.images.push({ name: info['name'], path: window.blocklyBaseURL + info['path'], screenCropFolder: info['screenCropFolder'] ,hash: info['hash'] });
+              vm.images.push({ name: info['name'], path: window.blocklyBaseURL + info['path'], screen_crop_folder: info['screen_crop_folder'] ,hash: info['hash'] });
             }
             window.blocklyCropImageList = [];
             for (var i = 0, info; i < data.screenshots.length; i++) {
