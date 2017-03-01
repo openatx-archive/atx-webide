@@ -371,6 +371,23 @@ class ConsoleHandler(tornado.web.RequestHandler):
             f.write(code)
         self.write({'status': 'ok'})
 
+class AutoCompleteHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        language = self.get_argument('language')
+        if language == 'python':
+            pythonLibs = ['os', 're', 'atx', 'time']
+            pythonLibMethods = {}
+            import importlib
+            for name in pythonLibs:
+                if name not in pythonLibMethods:
+                    pythonLibMethods[name] = []
+                dirs = dir(importlib.import_module(name))
+                for method in dirs:
+                    if not method.startswith("_") and method[0].islower():
+                        pythonLibMethods[name].append(method)
+            self.write(pythonLibMethods)
+
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
         path = path.encode(base.SYSTEM_ENCODING) # fix for windows
@@ -389,6 +406,7 @@ def make_app(settings={}):
         (r'/device', DeviceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
         (r'/console/log', ConsoleHandler),
+        (r'/autocomplete', AutoCompleteHandler),
     ], **settings)
     return application
 

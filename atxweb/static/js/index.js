@@ -124,6 +124,9 @@ var vm = new Vue({
       display: true,
       editorHeight: 0,
       consoleHeight: 0
+    },
+    autocomplete: {
+      pythonLibMethods: null
     }
   },
   computed: {
@@ -375,6 +378,29 @@ var vm = new Vue({
         }
       });
     },
+    loadPythonCompletePattern: function (callback) {
+      var self = this;
+      self.device.refreshing = true;
+      $.ajax({
+        url: '/autocomplete',
+        method: 'GET',
+        dataType: 'json',
+        data: {
+          language: 'python'
+        },
+        success: function(data) {
+          self.autocomplete.pythonLibMethods = data;
+          console.log("TEST2", self.autocomplete.pythonLibMethods);
+          if (callback) {
+            callback();
+          }
+        },
+        error: function(err) {
+          notify('获取python自动补全数据失败', 'error');
+          console.log('获取python自动补全数据失败:\n', err);
+        }
+      });
+    },
     runPyManualCode: function() {
       if (this.manual.dirty) { this.savePyManualCode(); }
       this.manual.running = true;
@@ -478,7 +504,7 @@ var vm = new Vue({
             for (var f in data['code_file']) {
               var isExist = false;
               for (var l in self.manual.options) {
-                if (l.value == data['code_file'][f]) {
+                if (self.manual.options[l].value == data['code_file'][f]) {
                   isExist = true;
                 }
               }
@@ -698,6 +724,8 @@ $(function() {
       theme: 'ace/theme/monokai',
       autoScrollEditorIntoView: false,
       showPrintMargin: false,
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: false
     });
 
     // handle Vim write
@@ -719,8 +747,10 @@ $(function() {
       fontSize: 14,
       newLineMode: 'unix',
       theme: 'ace/theme/monokai',
-      keyboardHandler: '',
+      keyboardHandler: ''
     });
+    // load code just after !pymaneditor == false
+    vm.loadPyManualCode();
     // handle Ctrl-S
     pymaneditor.commands.addCommand({
       name: 'savePyManualCode',
@@ -805,20 +835,51 @@ $(function() {
         }
       };
       pymaneditor.completers = [atxKeywordCompleter, imgnameCompleter];
-      // // static autocomplete
-      // pymaneditor.commands.addCommand({
-      //   name: 'atxAutoCompletion',
-      //   bindKey: 'Shift-Tab',
-      //   exec: function(editor) {
-      //     if (!editor.completer) {
-      //       editor.completer = new Autocomplete();
-      //     }
-      //     editor.completer.autoInsert = false;
-      //     editor.completer.autoSelect = true;
-      //     editor.completer.showPopup(editor);
-      //     editor.completer.cancelContextMenu();
-      //   },
-      // });
+
+      var pythonCompletePattern = vm.autocomplete.pythonLibMethods;
+      if (pythonCompletePattern) {
+        var pythonMatchStr = '/';
+        for (var pyLib in pythonCompletePattern) {
+          pythonMatchStr += pyLib.toString() + '|';
+        }
+        pythonMatchStr = pythonMatchStr.substr(0,pythonMatchStr.length-1) + '/';
+        var pythonCompleter = {
+          getCompletions: function (editor, session, pos, prefix, callback) {
+            var token = session.getTokenAt(pos.row, pos.column);
+            if (!token || token.value != '.') {
+              callback(true); // callback with err=true
+              return;
+            }
+            console.log("TEST", "python");
+            var line = editor.session.getLine(pos.row);
+            var pythonPrefix = util.retrievePrecedingIdentifier(line, pos.column - 1);
+            if (!pythonPrefix.match(pythonMatchStr)) {
+              callback(true);
+              return;
+            }
+            callback(null, pythonCompletePattern[pythonPrefix].map(function(pyLib) {
+              return { value: pyLib, score: 1, meta: 'function' };
+            }));
+          }
+        };
+        pymaneditor.completers.push(pythonCompleter);
+      }
+
+      // static autocomplete
+      pymaneditor.commands.addCommand({
+        name: 'atxAutoCompletion',
+        bindKey: 'Shift-Tab',
+        exec: function(editor) {
+          if (!editor.completer) {
+            editor.completer = new Autocomplete();
+          }
+
+          editor.completer.autoInsert = false;
+          editor.completer.autoSelect = true;
+          editor.completer.showPopup(editor);
+          editor.completer.cancelContextMenu();
+        },
+      });
       // live autocomplete
       pymaneditor.commands.on('afterExec', function(e) {
         var editor = e.editor;
@@ -843,9 +904,8 @@ $(function() {
   function connectWebsocket() {
     ws = new WebSocket('ws://' + location.host + '/ws')
     ws.onopen = function() {
-      ws.send(JSON.stringify({ command: "refresh" }))
+      ws.send(JSON.stringify({ command: "refresh" }));
       notify('与后台通信连接成功!!!');
-      vm.loadPyManualCode();
     };
     ws.onmessage = function(evt) {
       try {
@@ -932,8 +992,8 @@ $(function() {
   onResize();
 
   // WebSocket for debug
-  initEditors();
-  connectWebsocket()
+  vm.loadPythonCompletePattern(initEditors);
+  connectWebsocket();
 
   //------------------------ canvas overlays --------------------------//
 
