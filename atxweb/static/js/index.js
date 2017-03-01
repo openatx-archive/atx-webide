@@ -390,14 +390,12 @@ var vm = new Vue({
         },
         success: function(data) {
           self.autocomplete.pythonLibMethods = data;
-          console.log("TEST2", self.autocomplete.pythonLibMethods);
           if (callback) {
             callback();
           }
         },
         error: function(err) {
           notify('获取python自动补全数据失败', 'error');
-          console.log('获取python自动补全数据失败:\n', err);
         }
       });
     },

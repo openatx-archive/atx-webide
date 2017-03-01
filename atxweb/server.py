@@ -45,6 +45,7 @@ screen_crop_folder = {}
 device = None
 atx_settings = {}
 latest_screen = ''
+pythonLibMethods = {}
 
 
 def read_file(filename, default=''):
@@ -374,16 +375,16 @@ class AutoCompleteHandler(tornado.web.RequestHandler):
     def get(self):
         language = self.get_argument('language')
         if language == 'python':
-            pythonLibs = ['os', 're', 'atx', 'time']
-            pythonLibMethods = {}
-            import importlib
-            for name in pythonLibs:
-                if name not in pythonLibMethods:
-                    pythonLibMethods[name] = []
-                dirs = dir(importlib.import_module(name))
-                for method in dirs:
-                    if not method.startswith("_") and method[0].islower():
-                        pythonLibMethods[name].append(method)
+            if not pythonLibMethods:
+                pythonLibs = ['os', 're', 'atx', 'time']
+                import importlib
+                for name in pythonLibs:
+                    if name not in pythonLibMethods:
+                        pythonLibMethods[name] = []
+                    dirs = dir(importlib.import_module(name))
+                    for method in dirs:
+                        if not method.startswith("_") and method[0].islower():
+                            pythonLibMethods[name].append(method)
             self.write(pythonLibMethods)
 
 class StaticFileHandler(tornado.web.StaticFileHandler):
