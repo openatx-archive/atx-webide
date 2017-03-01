@@ -404,6 +404,8 @@ var vm = new Vue({
     runPyManualCode: function() {
       if (this.manual.dirty) { this.savePyManualCode(); }
       this.manual.running = true;
+      var $console = $('pre.console');
+      $console.text('');
       ws.send(JSON.stringify({ command: "run", code: this.manual.pythonText }));
     },
     runPyManualCodeToLine: function(line) {
@@ -514,7 +516,7 @@ var vm = new Vue({
             }
           }
         },
-        error: function (e) {
+        error: function(e) {
           console.log('Code加载失败:', e);
           notify(e.responseTman || 'Code加载失败，请检查服务器连接是否正常', 'warn');
         }
