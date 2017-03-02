@@ -13,6 +13,7 @@ import traceback
 import locale
 import re
 import imp
+import importlib
 
 import cv2
 import tornado.ioloop
@@ -377,7 +378,6 @@ class AutoCompleteHandler(tornado.web.RequestHandler):
         if language == 'python':
             if not pythonLibMethods:
                 pythonLibs = ['os', 're', 'atx', 'time']
-                import importlib
                 for name in pythonLibs:
                     if name not in pythonLibMethods:
                         pythonLibMethods[name] = []
