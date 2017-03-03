@@ -21,24 +21,6 @@
         <ul class="nav nav-tabs">
           <li v-bind:class="{'active': tab=='pythonManualDiv'}"><a @click="switchTab('pythonManualDiv')">Coding</a></li>
           <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
-          <template v-if="tab=='blocklyDiv' || tab=='pythonDiv'">
-            <li v-if="blockly.selected" v-bind:class='{"disabled":blockly.running}' class="pull-right" @click="runBlocklyStep">
-              <a>
-                <span class="glyphicon glyphicon-step-forward"></span>运行选中</a>
-            </li>
-            <li v-if="blockly.running" class="pull-right" @click="stopBlockly">
-              <a>
-                <span class="glyphicon glyphicon-stop"></span>停止</a>
-            </li>
-            <li v-else class="pull-right" @click="runBlockly">
-              <a>
-                <span class="glyphicon glyphicon-play"></span>运行</a>
-            </li>
-            <li class="pull-right" @click="saveWorkspace">
-              <a>
-                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
-            </li>
-          </template>
           <template v-if="tab=='pythonManualDiv'">
             <li v-bind:class='{"disabled":manual.running}' class="pull-right" @click="runPyManualCodeToLine">
               <a>
@@ -52,13 +34,27 @@
               <a>
                 <span class="glyphicon glyphicon-play"></span>运行</a>
             </li>
+            <li class="pull-right" @click="savePyManualCode">
+              <a>
+                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+            </li>
             <li class="pull-right" @click="loadPyManualCode">
               <a>
                 <span class="glyphicon glyphicon-open-file"></span>加载</a>
             </li>
-            <li class="pull-right" @click="savePyManualCode">
+            <li class="pull-right" @click="createCodeFile">
               <a>
-                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+                <span class="glyphicon glyphicon-file"></span>新建</a>
+            </li>
+            <li class="pull-right">
+              <a>
+                <span>当前文件：</span>
+                <select v-model="manual.selected" @change="changeFileItem(rowId, $event)">
+                  <option v-for="option in manual.options" v-bind:value="option.value">
+                    ${ option.value }
+                  </option>
+                </select>
+              </a>
             </li>
             <li class="pull-right" @click='toggleManualVimMode'><a>VimMode: ${ manual.vimmode ? 'ON' : 'OFF'}</a></li>
           </template>
@@ -109,9 +105,15 @@
         </div>
         <div v-show="layout.right_portion<=50">
           <h4>Console
-              <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
-            </h4>
-          <pre class='console'></pre>
+            <button type="button" @click="downloadConsole" class="btn btn-default btn-xs btn-download-console">Download</button>
+            <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+            <button v-if="console.display" type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Hide</button>
+            <button v-else type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Display</button>
+          </h4>
+          <pre class='console' id="pyconsole"></pre>
+        </div>
+        <div id="console-resize-handle" v-bind:style="{'left':50+'px','top':layout.height-10+'px'}">
+          <img src="{{static_url('arrows_drag_vert.png')}}" style="width:5%;height:5%;">
         </div>
       </div>
       <!-- #left-panel -->
@@ -119,6 +121,7 @@
       <div id="right-panel" style="width:layout.right_portion+'%'">
         <h4>Screen<span style="font-size:10px">(${resolution.displayMessage})</span>
             <button type="button" class="btn btn-default btn-xs" @click="saveScreenCrop">保存选区</button>
+            <button type="button" class="btn btn-default btn-xs" @click="setScreenCropFolder">设置目录</button>
             <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
             <template v-else>
               <button v-if="choosing" type="button" class="btn btn-default btn-xs" @click="openChooseDevice">刷新设备</button>
@@ -128,7 +131,7 @@
             <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
             <span style="font-size:10px;text-align:right">(${resolution.positionX}, ${resolution.positionY})</span>
           </h4>
-        <div id="screen-wrapper" style="width:${canvas_width}+'px';height:${canvas_height}+'px'" style="position: relative;">
+        <div id="screen-wrapper" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}" style="position: relative;">
           <div id="device-chooser" v-bind:style="{'display': choosing ? 'block' : 'none'}">
             <p>连接设备</p>
             <form>
@@ -173,8 +176,11 @@
         <!-- #screen-wrapper -->
         <div v-show="layout.right_portion>50">
           <h4>Console
-              <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
-            </h4>
+            <button type="button" @click="downloadConsole" class="btn btn-default btn-xs btn-download-console">Download</button>
+            <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
+            <button v-if="console.display" type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Hide</button>
+            <button v-else type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Display</button>
+          </h4>
           <pre class='console'></pre>
         </div>
       </div>
@@ -188,6 +194,7 @@
       <ul class="dropdown-menu" style="display:block;">
         <li v-bind:class="{'disabled':!overlays.crop_bounds.bound}"><a @click="onMenuReplaceImage">替换为选区图片</a></li>
         <li><a @click="onMenuInsertClickImage">插入click_image</a></li>
+        <li><a @click="onMenuInsertClickNowait">插入click_nowait</a></li>
         <li v-bind:class="{'disabled':!manual.row_image}"><a @click="onMenuReplaceRowImage">替换本行图片</a></li>
         <li><a @click="onMenuDelete">删除</a></li>
       </ul>
@@ -200,6 +207,8 @@
   <!-- hightlight -->
   <script src="{{static_url('libs/ace/ace.js')}}" data-manual></script>
   <script src="{{static_url('libs/ace/keybinding-vim.js')}}" data-manual></script>
+  <script src="{{static_url('libs/ace/ext-language_tools.js')}}" data-manual></script>
+  <script src="{{static_url('libs/ace/mode-python.js')}}" data-manual></script>
   <!-- blockly -->
   <script src="{{static_url('libs/blockly/blockly_compressed.js')}}"></script>
   <script src="{{static_url('libs/blockly/blocks_compressed.js')}}"></script>

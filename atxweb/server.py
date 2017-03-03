@@ -6,12 +6,14 @@ import sys
 import logging
 import webbrowser
 import socket
+import subprocess
 import time
 import json
 import traceback
 import locale
 import re
 import imp
+import importlib
 
 import cv2
 import tornado.ioloop
@@ -39,9 +41,12 @@ log.setLevel(logging.DEBUG)
 
 
 IMAGE_PATH = ['.', 'imgs', 'images']
+SERVER_FILE = ['__init__.py', '__main__.py', '__tmp.py', 'server.py']
+screen_crop_folder = {}
 device = None
 atx_settings = {}
 latest_screen = ''
+pythonLibMethods = {}
 
 
 def read_file(filename, default=''):
@@ -120,58 +125,35 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         log.info("WebSocket connected")
         self.write_message({'type': 'open'})
         self._run = False
+        self._proc = None
 
-    def _highlight_block(self, id):
-        self.write_message({'type': 'highlight', 'id': id})
-        if not self._run:
-            raise RuntimeError("stopped")
-        else:
-            time.sleep(.1)
-
-    def write_console(self, s):
-        self.write_message({'type': 'console', 'output': s})
-
-    def run_blockly(self, code):
-        filename = '__tmp.py'
-        fake_sysout = FakeStdout(self.write_console)
-
-        __sysout = sys.stdout
-        sys.stdout = fake_sysout # TODOs
-        self.write_message({'type': 'console', 'output': '# '+time.strftime('%H:%M:%S') + ' start running\n'})
-        try:
-            # python code always UTF-8
-            code = code.encode('utf-8')
-
-            if device is None:
-                raise RuntimeError('No Device!')
-
-            exec code in {
-                'd': device,
-                'atx': atx,
-                'os': os,
-                'highlight_block': self._highlight_block,
-                '__name__': '__main__',
-                '__file__': filename}
-        except RuntimeError as e:
-            if str(e) == 'stopped':
-                print 'Program stopped'
-                return
-            self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
-        except SystemExit:
-            pass
-        except Exception as e:
-            self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
-        finally:
-            self._run = False
-            self.write_message({'type': 'run', 'status': 'ready'})
-            self.write_message({'type': 'console', 'output': '# '+time.strftime('%H:%M:%S') + ' stop running\n ------------------ \n'})
-            sys.stdout = __sysout
+    def write_console(self, text):
+        self.write_message({'type': 'console', 'output': text})
 
     @run_on_executor
-    def background_task(self, code):
+    def run_python_code(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
-        self.run_blockly(code)
-        return True
+        filename = '__tmp.py'
+        with open(filename, 'wb') as f:
+            f.write(code.encode('utf-8'))
+
+        env = os.environ.copy()
+        print atx_settings
+        env['SERIAL'] = atx_settings.get('device_url', '')
+        start_time = time.time()
+        self._proc = subprocess.Popen(['python', '-u', filename],
+            bufsize=1,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT)
+        for line in iter(self._proc.stdout.readline, b''):
+            self.write_console(line)
+
+        exit_code = self._proc.wait()
+        print("Return: %d" % exit_code)
+        cost_time = time.time() - start_time
+        self.write_console("[Finished in %.1fs, exit code %d]\n" % (cost_time, exit_code))
+        self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束'})
 
     @tornado.gen.coroutine
     def on_message(self, message_text):
@@ -191,16 +173,18 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 realpath = name.replace('\\', '/') # fix for windows
                 if realpath.startswith('./'):
                     realpath = realpath[2:]
+                directory = os.path.dirname(name)
                 name = os.path.basename(name).split('@')[0]
                 if realpath.startswith('screenshots/'):
                     screenshots.append({
-                        'name': name, 
+                        'name': name,
                         'path': realpath
                     })
                 else:
                     images.append({
-                        'name': name, 
-                        'path': realpath, 
+                        'name': name,
+                        'path': realpath,
+                        'screen_crop_folder': directory,
                         'hash': '{}'.format(os.path.getmtime(realpath)).replace('.', '-')
                     })
             self.write_message({
@@ -209,26 +193,14 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                 'screenshots': screenshots, 
                 'latest': latest_screen
             })
-        elif command == 'autoRefresh':
-            self.write_message({
-                'type': 'image_latest',
-                'latest': latest_screen
-            })
-        elif command == 'run':
-            if self._run:
-                self.write_message({'type': 'run', 'notify': '运行中'})
-                return
-            self._run = True
-            self.write_message({'type': 'run', 'notify': '开始运行'})
-            res = yield self.background_task(message.get('code'))
-            self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束', 'result': res})
         elif command == 'stop':
-            if self._run:
-                self._run = False
-                sys.exit()
-                self.write_message({'type': 'stop', 'notify': '停止运行'})
-                return
-            self.write_message({'type': 'stop', 'notify': '未运行'})
+            if self._proc:
+                self._proc.terminate()
+            self.write_message({'type': 'run', 'notify': '停止中'})
+        elif command == 'run':
+            self.write_message({'type': 'run', 'notify': '开始运行'})
+            code = message.get('code')
+            yield self.run_python_code(code)
         else:
             self.write_message(u"You said: " + message)
 
@@ -238,40 +210,78 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-
-class WorkspaceHandler(tornado.web.RequestHandler):
-    def get(self):
-        ret = {}
-        ret['xml_text'] = read_file('blockly.xml', default='<xml xmlns="http://www.w3.org/1999/xhtml"></xml>')
-        ret['python_text'] = read_file('blockly.py')
-        self.write(ret)
-
-    def post(self):
-        log.info("Save workspace")
-        xml_text = self.get_argument('xml_text')
-        python_text = self.get_argument('python_text')
-        write_file('blockly.xml', xml_text)
-        write_file('blockly.py', python_text)
-
-
 class ManualCodeHandler(tornado.web.RequestHandler):
 
+    def post(self):
+        filename = self.get_argument('filename').encode(locale.getpreferredencoding(), 'ignore')
+        if self.get_argument('option') == 'create':
+            if not os.path.exists(filename + '.py'):
+                try:
+                    f = open(filename + '.py', 'a')
+                    default = '\n'.join([
+                        '# -*- encoding: utf-8 -*-',
+                        '#',
+                        '# Created on: %s\n\n' % time.ctime(),
+                        'import os',
+                        'import atx\n\n',
+                        'd = atx.connect(os.getenv("SERIAL"))',
+                    ])
+                    f.write(default)
+                    self.write({'status': 'ok', 'msg': 'success'})
+                except Exception, e:
+                    log.error('error in create code file: ', e)
+                    self.write({'status': 'error', 'msg': 'error'})
+            else:
+                self.write({'status': 'ok', 'msg': 'already exists'})
+        elif self.get_argument('option') == 'save':
+            log.info('Save manual code')
+            python_text = self.get_argument('python_text')
+            write_file(filename, python_text)
+        elif self.get_argument('option') == 'load':
+            ret = {}
+            default = '\n'.join([
+                '# -*- encoding: utf-8 -*-',
+                '#',
+                '# Created on: %s\n\n' % time.ctime(),
+                'import os',
+                'import atx\n\n',
+                'd = atx.connect(os.getenv("SERIAL"))',
+            ])
+            ret['man_text'] = read_file(filename, default=default)
+            if not os.path.isfile(filename):
+                write_file(filename, default)
+            ret['code_file'] = []
+            global SERVER_FILE
+            for f in os.listdir('.'):
+                if f not in SERVER_FILE and f.endswith('.py') and f != 'manual.py':
+                    ret['code_file'].append(f)
+            self.write(ret)
+        else:
+            log.info(self.get_argument('option'))
+
+
+class ScreenCropFolderHandler(tornado.web.RequestHandler):
+
     def get(self):
-        ret = {}
-        default = '\n'.join([
-            '# -*- encoding: utf-8 -*-',
-            '#',
-            '# Created on: %s\n\n' % time.ctime(),
-        ])
-        ret['man_text'] = read_file('manual.py', default=default)
-        if not os.path.isfile('manual.py'):
-            write_file('manual.py', default)
-        self.write(ret)
+        if self.request.remote_ip not in screen_crop_folder:
+            screen_crop_folder[self.request.remote_ip] = '.'
+        self.write(screen_crop_folder.get(self.request.remote_ip))
 
     def post(self):
-        log.info('Save manual code')
-        python_text = self.get_argument('python_text')
-        write_file('manual.py', python_text)
+        foldername = self.get_argument('foldername')
+        if foldername:
+            if not os.path.exists(foldername):
+                try:
+                    os.makedirs(foldername)
+                except Exception, e:
+                    print 'error in create image folder: ', e
+                    return
+            screen_crop_folder[self.request.remote_ip] = foldername
+            global IMAGE_PATH
+            if foldername not in IMAGE_PATH:
+                IMAGE_PATH.append(foldername)
+            self.write({'status': 'ok'})
+            return
 
 class ScreenshotHandler(tornado.web.RequestHandler):
 
@@ -300,7 +310,9 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         l, t, r, b = map(int, bound)
         image = imutils.open(screenname)
         image = imutils.crop(image, l, t, r, b)
-        cv2.imwrite(filename, image)
+        if self.request.remote_ip not in screen_crop_folder:
+            screen_crop_folder[self.request.remote_ip] = '.'
+        cv2.imwrite(os.path.join(screen_crop_folder[self.request.remote_ip], filename), image)
         self.write({'status': 'ok'})
 
 class DeviceHandler(tornado.web.RequestHandler):
@@ -333,6 +345,7 @@ class DeviceHandler(tornado.web.RequestHandler):
 
         # wrapping args, should be in drivers? identifier?
         settings = {}
+        atx_settings['device_url'] = serial.encode('utf-8') # used in set env-var SERIAL
         if serial.startswith('http://'):
             settings['platform'] = platform = 'ios'
             settings['device_url'] = serial
@@ -349,6 +362,31 @@ class DeviceHandler(tornado.web.RequestHandler):
             info = device.info
         self.write({'status': 'ok', 'info': info})
 
+class ConsoleHandler(tornado.web.RequestHandler):
+
+    def post(self):
+        code = self.get_argument('code')
+        filename = self.get_argument('filename').encode(locale.getpreferredencoding(), 'ignore')
+        with open (filename+'.log', 'w') as f:
+            f.write(code)
+        self.write({'status': 'ok'})
+
+class AutoCompleteHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        language = self.get_argument('language')
+        if language == 'python':
+            if not pythonLibMethods:
+                pythonLibs = ['os', 're', 'atx', 'time']
+                for name in pythonLibs:
+                    if name not in pythonLibMethods:
+                        pythonLibMethods[name] = []
+                    dirs = dir(importlib.import_module(name))
+                    for method in dirs:
+                        if not method.startswith("_") and method[0].islower():
+                            pythonLibMethods[name].append(method)
+            self.write(pythonLibMethods)
+
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
         path = path.encode(base.SYSTEM_ENCODING) # fix for windows
@@ -360,12 +398,14 @@ def make_app(settings={}):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r'/ws', DebugWebSocket), # code debug
-        (r"/workspace", WorkspaceHandler), # save and write workspace
         (r"/manual_code", ManualCodeHandler), # save and write py code
         (r"/images/screenshot", ScreenshotHandler),
+        (r"/images/screencropfolder", ScreenCropFolderHandler),
         (r'/api/images', ImageHandler),
         (r'/device', DeviceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
+        (r'/console/log', ConsoleHandler),
+        (r'/autocomplete', AutoCompleteHandler),
     ], **settings)
     return application
 
