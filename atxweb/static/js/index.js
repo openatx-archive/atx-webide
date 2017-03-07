@@ -164,6 +164,14 @@ var vm = new Vue({
           platform: this.device.platform,
         },
         success: function(data) {
+          if ('serial' in data) {
+            self.choosing = false;
+            self.device.serial = data.serial;
+            self.device.refreshing = false;
+            self.refreshScreen();
+            return;
+          }
+
           // clean old devices
           self.android_serial_choices.splice(0, self.android_serial_choices.length);
           for (var i = 0, s; i < data.android.length; i++) {
