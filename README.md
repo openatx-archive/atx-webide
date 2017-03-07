@@ -19,6 +19,13 @@ or clone this repository and run:
 if you got "TypeError: decoding Unicode is not supported" in easy_install,
 run ```pip install -U setuptools``` first.
 
+##Features
+1. what you see is what you get
+2. autocompletion of atx keywords & Python
+3. crop screen as images to operation by **atx**
+4. convenient operations on codes, files & images
+5. to be continued
+
 ## Usage
 ```
 $ python -m atxweb
