@@ -127,6 +127,9 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         self._run = False
         self._proc = None
 
+    def write_lineno(self, lineno):
+        self.write_message({'type': 'lineno', 'lineno': lineno})
+
     def write_console(self, text):
         self.write_message({'type': 'console', 'output': text})
 
@@ -134,7 +137,23 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
     def run_python_code(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
         filename = '__tmp.py'
-        with open(filename, 'wb') as f:
+
+        trace_code = '\n'.join([
+            'import os',
+            'import sys',
+            'def _trace(frame, event, arg_unused):',
+            '    if os and os.path.basename(os.path.abspath(__file__)) == "__tmp.py":',
+            '        print "lineno: %s" % (frame.f_lineno - 7)',
+            '    return _trace',
+            'sys.settrace(_trace)\n',
+        ])
+
+        if os.path.exists(filename):
+            with open(filename, 'w+') as f:
+                f.truncate()
+
+        with open(filename, 'a') as f:
+            f.write(trace_code)
             f.write(code.encode('utf-8'))
 
         env = os.environ.copy()
@@ -147,7 +166,10 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
         for line in iter(self._proc.stdout.readline, b''):
-            self.write_console(line)
+            if line.startswith('lineno:'):
+                self.write_lineno(line[8:])
+            else:
+                self.write_console(line)
 
         exit_code = self._proc.wait()
         print("Return: %d" % exit_code)
