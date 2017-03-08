@@ -164,6 +164,14 @@ var vm = new Vue({
           platform: this.device.platform,
         },
         success: function(data) {
+          if ('serial' in data) {
+            self.choosing = false;
+            self.device.serial = data.serial;
+            self.device.refreshing = false;
+            self.refreshScreen();
+            return;
+          }
+
           // clean old devices
           self.android_serial_choices.splice(0, self.android_serial_choices.length);
           for (var i = 0, s; i < data.android.length; i++) {
@@ -706,6 +714,8 @@ var ws;
 /* ace code editor */
 var pyviewer;
 var pymaneditor;
+var Range = ace.require('ace/range').Range;
+var makerId;
 
 /* init */
 $(function() {
@@ -947,6 +957,14 @@ $(function() {
             var text = $console.html();
             $console.text($console.html() + data.output);
             $console.scrollTop($console.prop('scrollHeight'));
+            break;
+          case 'lineno':
+            var lineno = parseInt(data.lineno);
+            if (makerId) {
+              pymaneditor.session.removeMarker(makerId);
+            }
+            makerId = pymaneditor.session.addMarker(
+              new Range(lineno-1, 0, lineno-1, 1000), "CodeHighLightMarker", "fullLine");
             break;
           default:
             console.log("No match data type: ", data.type)

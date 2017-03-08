@@ -115,6 +115,12 @@ pre.console {
   cursor: col-resize;
 }
 
+.CodeHighLightMarker {
+  position:absolute;
+  background:rgba(100,200,100,0.5);
+  z-index:20
+}
+
 .tree-node {
 }
 .tree-node-folder {
