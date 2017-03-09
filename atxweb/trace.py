@@ -7,7 +7,7 @@ import argparse
 
 def _trace(frame, event, arg_unused):
     if os and os.path.basename(os.path.abspath(__file__)) == "trace.py":
-        print "lineno: %s" % (frame.f_lineno)
+        print "$$lineno: %s" % (frame.f_lineno)
         return _trace
 
 

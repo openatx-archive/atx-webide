@@ -948,6 +948,12 @@ $(function() {
             if (data.notify) { notify(data.notify); }
             break;
           case 'stop':
+            if (data.status == 'stopped') {
+              vm.manual.running = false;
+            }
+            if (makerId) {
+              pymaneditor.session.removeMarker(makerId);
+            }
             break;
           case 'traceback':
             alert(data.output);

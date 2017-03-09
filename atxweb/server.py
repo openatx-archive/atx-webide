@@ -156,8 +156,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
         for line in iter(self._proc.stdout.readline, b''):
-            if line.startswith('lineno:'):
-                self.write_lineno(line[8:])
+            if line.startswith('$$lineno:'):
+                self.write_lineno(line[10:])
             else:
                 self.write_console(line)
 
@@ -209,6 +209,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             if self._proc:
                 self._proc.terminate()
             self.write_message({'type': 'run', 'notify': '停止中'})
+            self.write_message({'type': 'stop', 'status': 'stopped'})
         elif command == 'run':
             self.write_message({'type': 'run', 'notify': '开始运行'})
             code = message.get('code')
