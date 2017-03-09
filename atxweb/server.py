@@ -138,30 +138,19 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         self.write_message({'type': 'run', 'status': 'running'})
         filename = '__tmp.py'
 
-        trace_code = '\n'.join([
-            'import os',
-            'import sys',
-            'def _trace(frame, event, arg_unused):',
-            '    if os and os.path.basename(os.path.abspath(__file__)) == "__tmp.py":',
-            '        print "lineno: %s" % (frame.f_lineno - 7)',
-            '    return _trace',
-            'sys.settrace(_trace)\n',
-        ])
-
         #clear old codes
         if os.path.exists(filename):
             with open(filename, 'w+') as f:
                 f.truncate()
 
         with open(filename, 'a') as f:
-            f.write(trace_code)
             f.write(code.encode('utf-8'))
 
         env = os.environ.copy()
         print atx_settings
         env['SERIAL'] = atx_settings.get('device_url', '')
         start_time = time.time()
-        self._proc = subprocess.Popen(['python', '-u', filename],
+        self._proc = subprocess.Popen(['python', '-u', 'trace.py', '-f', filename],
             bufsize=1,
             env=env,
             stdout=subprocess.PIPE,
