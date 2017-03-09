@@ -150,7 +150,6 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         print atx_settings
         env['SERIAL'] = atx_settings.get('device_url', '')
         start_time = time.time()
-        global __dir__
         self._proc = subprocess.Popen(['python', '-u', os.path.join(__dir__, 'common/trace.py'), '-f', filename],
             bufsize=1,
             env=env,
