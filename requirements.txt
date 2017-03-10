@@ -1,4 +1,2 @@
 futures==3.0.5
-opencv-python==3.2.0.6
-Pillow==4.0.0
 tornado==4.3
