@@ -130,24 +130,36 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
     def write_console(self, text):
         self.write_message({'type': 'console', 'output': text})
 
+    def write_lineno(self, lineno):
+        self.write_message({'type': 'lineno', 'lineno': lineno})
+
     @run_on_executor
     def run_python_code(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
         filename = '__tmp.py'
-        with open(filename, 'wb') as f:
+
+        #clear old codes
+        if os.path.exists(filename):
+            with open(filename, 'w+') as f:
+                f.truncate()
+
+        with open(filename, 'a') as f:
             f.write(code.encode('utf-8'))
 
         env = os.environ.copy()
         print atx_settings
         env['SERIAL'] = atx_settings.get('device_url', '')
         start_time = time.time()
-        self._proc = subprocess.Popen(['python', '-u', filename],
+        self._proc = subprocess.Popen(['python', '-u', os.path.join(__dir__, 'common/trace.py'), '-f', filename],
             bufsize=1,
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
         for line in iter(self._proc.stdout.readline, b''):
-            self.write_console(line)
+            if line.startswith('$$lineno:'):
+                self.write_lineno(line[10:])
+            else:
+                self.write_console(line)
 
         exit_code = self._proc.wait()
         print("Return: %d" % exit_code)
@@ -197,6 +209,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             if self._proc:
                 self._proc.terminate()
             self.write_message({'type': 'run', 'notify': '停止中'})
+            self.write_message({'type': 'stop', 'status': 'stopped'})
         elif command == 'run':
             self.write_message({'type': 'run', 'notify': '开始运行'})
             code = message.get('code')
@@ -320,13 +333,16 @@ class DeviceHandler(tornado.web.RequestHandler):
     def get(self):
         '''get device list'''
         global device
+        if hasattr(device, 'serial'):
+            self.write({'serial': device.serial})
+            return
         try:
             d = AdbClient().devices().keys()
             print 'android device list:', d
         except EnvironmentError as e:
             print 'ERROR:', str(e)
             d = []
-        self.write({'android': d, 'ios': [], 'serial': 'todo'}) #device and device.serial})
+        self.write({'android': d, 'ios': []})  # device list
 
     def post(self):
         '''connect device'''
