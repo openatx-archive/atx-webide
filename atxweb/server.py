@@ -6,7 +6,6 @@ import sys
 import logging
 import webbrowser
 import socket
-import subprocess
 import time
 import json
 import traceback
@@ -21,6 +20,11 @@ import tornado.web
 import tornado.websocket
 from tornado.concurrent import run_on_executor
 from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for python2
+try:
+    import subprocess32 as subprocess
+except:
+    import subprocess
+
 
 try:
     import atx
@@ -360,18 +364,10 @@ class DeviceHandler(tornado.web.RequestHandler):
                     return
 
         # wrapping args, should be in drivers? identifier?
-        settings = {}
-        atx_settings['device_url'] = serial.encode('utf-8') # used in set env-var SERIAL
-        if serial.startswith('http://'):
-            settings['platform'] = platform = 'ios'
-            settings['device_url'] = serial
-        else:
-            settings['platform'] = platform = 'android'
-            settings['serialno'] = serial
+        atx_connect_url = atx_settings['device_url'] = serial.encode('utf-8') # used in set env-var SERIAL
+        device = atx.connect(atx_connect_url)
 
-        # (re)connect
-        device = atx.connect(**settings)
-        if platform == 'ios':
+        if device.platform == 'ios':
             info = device.status()
             setattr(device, 'serial', serial)
         else:
@@ -383,7 +379,7 @@ class ConsoleHandler(tornado.web.RequestHandler):
     def post(self):
         code = self.get_argument('code')
         filename = self.get_argument('filename').encode(locale.getpreferredencoding(), 'ignore')
-        with open (filename+'.log', 'w') as f:
+        with open(filename+'.log', 'w') as f:
             f.write(code)
         self.write({'status': 'ok'})
 
