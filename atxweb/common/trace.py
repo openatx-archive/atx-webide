@@ -8,7 +8,6 @@ import argparse
 def exec_file(filename):
     cur_file = os.path.basename(os.path.abspath(__file__))
     def _trace(frame, event, arg_unused):
-        lineno = frame.f_lineno
         basename = frame.f_code.co_filename
         if cur_file == "trace.py" and basename[-len(filename):] == filename:
             print "$$lineno: %s" % (frame.f_lineno)
