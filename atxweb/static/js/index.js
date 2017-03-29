@@ -944,6 +944,9 @@ $(function() {
           case 'run':
             if (data.status == 'ready') {
               vm.manual.running = false;
+              if (makerId) {
+                pymaneditor.session.removeMarker(makerId);
+              }
             }
             if (data.notify) { notify(data.notify); }
             break;
