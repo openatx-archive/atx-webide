@@ -5,13 +5,12 @@ import os
 import sys
 import argparse
 
-def _trace(frame, event, arg_unused):
-    if os and os.path.basename(os.path.abspath(__file__)) == "trace.py":
-        print "$$lineno: %s" % (frame.f_lineno)
-    return _trace
-
-
 def exec_file(filename):
+    def _trace(frame, event, arg_unused):
+        if os and os.path.basename(os.path.abspath(__file__)) == "trace.py" and os.path.basename(
+                frame.f_code.co_filename) == filename:
+            print "$$lineno: %s" % (frame.f_lineno)
+        return _trace
     sys.settrace(_trace)
     exec open(filename) in {}
     sys.settrace(None)
