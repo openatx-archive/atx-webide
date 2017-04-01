@@ -1068,6 +1068,12 @@ $(function() {
     if (evt.movementX == 0 && evt.movementY == 0) {
       return;
     }
+    if (vm.resolution.imgWidth == 0 || vm.resolution.imgHeight ==0) {
+      return;
+    }
+    vm.resolution.positionX = Math.floor(evt.offsetX*vm.resolution.imgWidth/this.width);
+    vm.resolution.positionY = Math.floor(evt.offsetY*vm.resolution.imgHeight/this.height);
+
     if (crop_bounds.start == null && crop_rect_bounds.start == null) {
       return;
     }
