@@ -125,7 +125,7 @@
             <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
             <template v-else>
               <button v-if="choosing" type="button" class="btn btn-default btn-xs" @click="openChooseDevice">刷新设备</button>
-              <button v-else type="button" class="btn btn-default btn-xs" @click="openChooseDevice">切换设备</button>
+              <button v-else type="button" class="btn btn-default btn-xs" @click="openChooseDevice">切换</button>
             </template>
             <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing || autorefresh">刷新</button>
             <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
