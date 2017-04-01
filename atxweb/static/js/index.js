@@ -70,6 +70,7 @@ var vm = new Vue({
       platform: 'android',
       serial: '',
       latest_screen: '',
+      change: false
     },
     // layout controls
     layout: {
@@ -123,7 +124,8 @@ var vm = new Vue({
       filename: "console.log",
       display: true,
       editorHeight: 0,
-      consoleHeight: 0
+      consoleHeight: 0,
+      content: null
     },
     autocomplete: {
       pythonLibMethods: null
@@ -164,22 +166,32 @@ var vm = new Vue({
           platform: this.device.platform,
         },
         success: function(data) {
-          if ('serial' in data) {
+          if ('serial' in data && !self.device.change) {
             self.choosing = false;
             self.device.serial = data.serial;
             self.device.refreshing = false;
             self.refreshScreen();
             return;
           }
-
           // clean old devices
           self.android_serial_choices.splice(0, self.android_serial_choices.length);
           for (var i = 0, s; i < data.android.length; i++) {
             s = data.android[i];
             self.android_serial_choices.push(s);
           }
+          if (self.device.change) {
+            var context=canvas.getContext("2d");
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.beginPath();
+            context.moveTo(0,0);
+            context.lineTo(event.clientX,event.clientY);
+            context.stroke();
+            context.closePath();
+          }
+
           self.choosing = true;
           self.device.refreshing = false;
+          self.device.change = false;
         },
         error: function(err) {
           notify('获取设备列表失败', 'error');
@@ -214,6 +226,7 @@ var vm = new Vue({
       this.choosing = false;
     },
     openChooseDevice: function() {
+      this.device.change = true;
       this.getDeviceChoices();
     },
     refreshScreen: function() {
@@ -919,7 +932,7 @@ $(function() {
     };
     ws.onmessage = function(evt) {
       try {
-        var data = JSON.parse(evt.data)
+        var data = JSON.parse(evt.data);
         console.log('websocket message: ', evt.data);
         switch (data.type) {
           case 'open':
@@ -944,6 +957,9 @@ $(function() {
           case 'run':
             if (data.status == 'ready') {
               vm.manual.running = false;
+              if (makerId) {
+                pymaneditor.session.removeMarker(makerId);
+              }
             }
             if (data.notify) { notify(data.notify); }
             break;
@@ -960,8 +976,8 @@ $(function() {
             break;
           case 'console':
             var $console = $('pre.console');
-            var text = $console.html();
-            $console.text($console.html() + data.output);
+            vm.console.content = $console.text();
+            $console.text(vm.console.content + data.output);
             $console.scrollTop($console.prop('scrollHeight'));
             break;
           case 'lineno':
