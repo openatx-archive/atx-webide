@@ -976,8 +976,8 @@ $(function() {
             break;
           case 'console':
             var $console = $('pre.console');
-            vm.console.content = $console.text();
-            $console.text(vm.console.content + data.output);
+            vm.console.content = $console.html();
+            $console.html(vm.console.content + data.output);
             $console.scrollTop($console.prop('scrollHeight'));
             break;
           case 'lineno':

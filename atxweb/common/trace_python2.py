@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
 
 import os
 import sys
@@ -10,8 +9,8 @@ def exec_file(filename):
     cur_file = os.path.basename(os.path.abspath(__file__))
     def _trace(frame, event, arg_unused):
         basename = frame.f_code.co_filename
-        if cur_file == "trace.py" and basename[-len(filename):] == filename:
-            print("$$lineno: %s" % (frame.f_lineno))
+        if cur_file == "trace_python2.py" and basename[-len(filename):] == filename:
+            print "$$lineno: %s" % (frame.f_lineno)
         return _trace
     sys.settrace(_trace)
     exec open(filename) in {}
