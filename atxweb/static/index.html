@@ -3,9 +3,6 @@
 
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" />
   <title>ATX-IDE</title>
   <!-- Bootstrap -->
   <link rel="stylesheet" href="{{static_url('libs/bootstrap-3.3.7/css/bootstrap.min.css')}}">
@@ -14,192 +11,86 @@
 </head>
 
 <body>
-  <div id="main-content" class="container-fluid">
-    <div class="col-md-12">
-      <!-- left panel -->
-      <div id="left-panel" v-bind:style="{'width':(100-layout.right_portion)+'%'}">
-        <ul class="nav nav-tabs">
-          <li v-bind:class="{'active': tab=='pythonManualDiv'}"><a @click="switchTab('pythonManualDiv')">Coding</a></li>
-          <li v-bind:class="{'active': tab=='imagesDiv'}"><a @click="switchTab('imagesDiv')">Images</a></li>
-          <template v-if="tab=='pythonManualDiv'">
-            <li v-bind:class='{"disabled":manual.running}' class="pull-right" @click="runPyManualCodeToLine">
-              <a>
-                <span class="glyphicon glyphicon-step-forward"></span>运行到本行</a>
+  <div id="main-content">
+    <div id="left-panel">
+      <div id="left-top">
+      </div>
+      <div id="left-bottom">
+          <ul class="clearfix">
+            <li v-for="img in images">
+              <div><img src="${img.path}">
+                <p>${img.name}</p>
+              </div>
             </li>
-            <li v-if="manual.running" class="pull-right" @click="stopPyManualCode">
-              <a>
-                <span class="glyphicon glyphicon-stop"></span>停止</a>
-            </li>
-            <li v-else class="pull-right" @click="runPyManualCode">
-              <a>
-                <span class="glyphicon glyphicon-play"></span>运行</a>
-            </li>
-            <li class="pull-right" @click="savePyManualCode">
-              <a>
-                <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
-            </li>
-            <li class="pull-right" @click="loadPyManualCode">
-              <a>
-                <span class="glyphicon glyphicon-open-file"></span>加载</a>
-            </li>
-            <li class="pull-right" @click="createCodeFile">
-              <a>
-                <span class="glyphicon glyphicon-file"></span>新建</a>
-            </li>
-            <li class="pull-right">
-              <a>
-                <span>当前文件：</span>
-                <select v-model="manual.selected" @change="changeFileItem(rowId, $event)">
-                  <option v-for="option in manual.options" v-bind:value="option.value">
-                    ${ option.value }
-                  </option>
-                </select>
-              </a>
-            </li>
-            <li class="pull-right" @click='toggleManualVimMode'><a>VimMode: ${ manual.vimmode ? 'ON' : 'OFF'}</a></li>
-          </template>
-        </ul>
-        <div class="tab-content">
-          <div id="blocklyDiv" v-bind:class="{'active': tab=='blocklyDiv'}" class="tab-pane"></div>
-          <div id="pythonDiv" v-bind:class="{'active': tab=='pythonDiv'}" class="tab-pane">
-            <pre id="python-code-viewer" style="opacity:0"></pre>
-          </div>
-          <div id="pythonManualDiv" v-bind:class="{'active': tab=='pythonManualDiv'}" class="tab-pane" style="position:relative">
-            <div>
-              <pre id="python-man-editor" style="opacity:0"></pre>
-              <p class="small text-muted">
-                <b style="margin-right:3px">Save</b><i style="margin-right:8px">Ctrl-S</i>
-                <b style="margin-right:3px">Run</b><i style="margin-right:8px">Ctrl-G</i>
-                <b style="margin-right:3px">RunToLine</b><i style="margin-right:8px">Ctrl-Shift-G</i>
-              </p>
-            </div>
-            <div @click="hideContextMenu" @contextmenu="hideContextMenu" style="position:absolute; overflow-y:auto; background-color:white; top:0px;right:0px;bottom:0px;display:block;width:30%;min-width:100px;z-index:2; padding:2px;">
-              <ul class="clearfix">
-                <li v-for="img in images" v-if="manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
-                  <div style="background-color: img.name == manual.row_image ? 'red' :'transparent'" style="text-align:center">
-                    <img src="${img.path}?h=${img.hash}" style="height:50px">
-                    <p>${img.name | imagename}</p>
-                  </div>
-                </li>
-              </ul>
-              <hr/>
-              <ul class="clearfix">
-                <li v-for="img in images" v-if="!manual.usedimages[img.name]" @contextmenu.prevent.stop="showContextMenu($event, img)" style="float:left;margin-right:5px;">
-                  <div style="background-color: img.name == manual.row_image ? 'red' :'transparent'" style="text-align:center">
-                    <img src="${img.path}?h=${img.hash}" style="height:50px">
-                    <p>${img.name | imagename}</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div id="imagesDiv" v-bind:class="{'active': tab=='imagesDiv'}" class="tab-pane">
-            <ul class="clearfix">
-              <li v-for="img in images">
-                <div><img src="${img.path}">
-                  <p>${img.name}</p>
+          </ul>
+      </div>
+    </div>
+    <div id="middle-panel">
+      <div id="middle-top">
+        <pre id="python-man-editor" style="opacity:0"></pre>
+      </div>
+      <div id="middle-bottom">
+        <pre class='console' id="pyconsole"></pre>
+      </div>
+    </div>
+    <div id="right-panel">
+        <div id = "right-upper">
+          <h4>Screen<span style="font-size:10px">(${resolution.displayMessage})</span>
+              <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
+              <template v-else>
+                <button v-if="choosing" type="button" class="btn btn-default btn-xs" @click="openChooseDevice">刷新设备</button>
+                <button v-else type="button" class="btn btn-default btn-xs" @click="openChooseDevice">切换</button>
+              </template>
+              <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing || autorefresh">刷新</button>
+              <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
+              <span style="font-size:10px;text-align:right">(${resolution.positionX}, ${resolution.positionY})</span>
+            </h4>
+        </div>
+        <div id="right-bottom">
+            <div id="device-chooser">
+              <p>连接设备</p>
+              <form>
+                <div class="center-block">
+                  <label class="radio-inline">
+                    <input type="radio" v-model="device.platform" name="platform" value="android" checked>Android
+                  </label>
+                  <label class="radio-inline">
+                    <input type="radio" v-model="device.platform" name="platform" value="ios">iOS
+                  </label>
                 </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div v-show="layout.right_portion<=50">
-          <h4>Console
-            <button type="button" @click="downloadConsole" class="btn btn-default btn-xs btn-download-console">Download</button>
-            <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
-            <button v-if="console.display" type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Hide</button>
-            <button v-else type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Display</button>
-          </h4>
-          <pre class='console' id="pyconsole"></pre>
-        </div>
-        <div id="console-resize-handle" v-bind:style="{'left':50+'px','top':layout.height-10+'px'}">
-          <img src="{{static_url('arrows_drag_vert.png')}}" style="width:5%;height:5%;">
-        </div>
-      </div>
-      <!-- #left-panel -->
-      <!-- right-panel -->
-      <div id="right-panel" style="width:layout.right_portion+'%'">
-        <h4>Screen<span style="font-size:10px">(${resolution.displayMessage})</span>
-            <button type="button" class="btn btn-default btn-xs" @click="saveScreenCrop">保存选区</button>
-            <button type="button" class="btn btn-default btn-xs" @click="setScreenCropFolder">设置目录</button>
-            <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
-            <template v-else>
-              <button v-if="choosing" type="button" class="btn btn-default btn-xs" @click="openChooseDevice">刷新设备</button>
-              <button v-else type="button" class="btn btn-default btn-xs" @click="openChooseDevice">切换</button>
-            </template>
-            <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing || autorefresh">刷新</button>
-            <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
-            <span style="font-size:10px;text-align:right">(${resolution.positionX}, ${resolution.positionY})</span>
-          </h4>
-        <div id="screen-wrapper" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}" style="position: relative;">
-          <div id="device-chooser" v-bind:style="{'display': choosing ? 'block' : 'none'}">
-            <p>连接设备</p>
-            <form>
-              <div class="center-block">
-                <label class="radio-inline">
-                  <input type="radio" v-model="device.platform" name="platform" value="android" checked>Android
-                </label>
-                <label class="radio-inline">
-                  <input type="radio" v-model="device.platform" name="platform" value="ios">iOS
-                </label>
-              </div>
-              <div v-show='device.platform=="ios"'>
-                <p>请输入连接地址</p>
-                <input type="text" v-model="ios_url" placeholder="http://..." class="form-control">
-              </div>
-              <div v-else>
-                <p>请选择序列号</p>
-                <select v-model="android_serial" class="form-control">
-                  <option v-if="android_serial_choices.length==0" value="" disabled selected>No Device available!</option>
-                  <option v-for="s in android_serial_choices">${s}</option>
-                </select>
-              </div>
-              <div>
-                <button type="button" class="btn btn-primary" @click="connectDevice">连 接</button>
-                <button type="button" class="btn btn-primary" @click="cancelConnectDevice">取 消</button>
-              </div>
-            </form>
-          </div>
-          <!-- #device-chooser -->
-          <div id="screen-overlays" class="full">
-            <div id="overlays-swipe" class="full">
-              <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
+                <div v-show='device.platform=="ios"'>
+                  <p>请输入连接地址</p>
+                  <input type="text" v-model="ios_url" placeholder="http://..." class="form-control">
+                </div>
+                <div v-else>
+                  <p>请选择序列号</p>
+                  <select v-model="android_serial" class="form-control">
+                    <option v-if="android_serial_choices.length==0" value="" disabled selected>No Device available!</option>
+                    <option v-for="s in android_serial_choices">${s}</option>
+                  </select>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-primary" @click="connectDevice">连 接</button>
+                  <button type="button" class="btn btn-primary" @click="cancelConnectDevice">取 消</button>
+                </div>
+              </form>
             </div>
+            <!-- #device-chooser -->
+            <div id="screen-overlays" class="full">
+              <div id="overlays-swipe" class="full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
+              </div>
+            </div>
+            <!-- #screen-overlays -->
+            <div id="screen-crop" class="image-crop"></div>
+            <div id="screen-crop-rect" class="image-crop"></div>
+            <canvas id="canvas" @contextmenu="saveScreenCropRightClick">
+              Browser not support canvas
+            </canvas>
           </div>
-          <!-- #screen-overlays -->
-          <div id="screen-crop" class="image-crop"></div>
-          <div id="screen-crop-rect" class="image-crop"></div>
-          <canvas id="canvas" @contextmenu="saveScreenCropRightClick">
-            Browser not support canvas
-          </canvas>
-        </div>
-        <!-- #screen-wrapper -->
-        <div v-show="layout.right_portion>50">
-          <h4>Console
-            <button type="button" @click="downloadConsole" class="btn btn-default btn-xs btn-download-console">Download</button>
-            <button type="button" @click="clearConsole" class="btn btn-default btn-xs btn-clear-console">Clear</button>
-            <button v-if="console.display" type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Hide</button>
-            <button v-else type="button" @click="toggleConsole" class="btn btn-default btn-xs btn-hide-console">Display</button>
-          </h4>
-          <pre class='console'></pre>
-        </div>
       </div>
-      <!-- #right-panel -->
-      <div id="resize-handle" v-bind:style="{'left':(layout.width-60)*(1-layout.right_portion/100)+15-5+'px','top':layout.height/3+'px'}">
-        <img src="{{static_url('arrows_drag_horiz.png')}}" style="width:100%;height:100%;">
-      </div>
-    </div>
-    <!-- col-md-12 -->
-    <div v-show="tab=='pythonManualDiv' && manual.contextmenu.img" style="position:absolute;display:none;" v-bind:style="{'display':manual.contextmenu.img!=null, 'left':manual.contextmenu.left+'px', 'top':manual.contextmenu.top+'px'}">
-      <ul class="dropdown-menu" style="display:block;">
-        <li v-bind:class="{'disabled':!overlays.crop_bounds.bound}"><a @click="onMenuReplaceImage">替换为选区图片</a></li>
-        <li><a @click="onMenuInsertClickImage">插入click_image</a></li>
-        <li><a @click="onMenuInsertClickNowait">插入click_nowait</a></li>
-        <li v-bind:class="{'disabled':!manual.row_image}"><a @click="onMenuReplaceRowImage">替换本行图片</a></li>
-        <li><a @click="onMenuDelete">删除</a></li>
-      </ul>
-    </div>
   </div>
+
   <!-- jquery -->
   <script src="{{static_url('libs/jquery/jquery-1.11.3.min.js')}}"></script>
   <script src="{{static_url('libs/bootstrap-3.3.7/js/bootstrap.min.js')}}"></script>

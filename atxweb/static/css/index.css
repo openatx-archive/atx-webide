@@ -1,119 +1,87 @@
 html, body{
   height: 100%;
-  overflow: hidden;
-}
-
-a {
-  cursor: pointer;
-}
-ul {
-  padding-left: 20px;
-}
-
-li {
-  list-style: none;
+  width: 100%;
+  overflow: scroll;
 }
 
 #main-content {
-  min-width: 1000px;
-  padding-top: 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+
+  padding-top: 15px;
+  width: 100%;
+  height: 100%;
 }
 
-#left-panel, #right-panel {
-  float: left;
-  position: relative;
-  min-height: 1px;
+#left-panel {
+  display: flex;
+  flex-direction: column;
+
   padding-left: 15px;
   padding-right: 15px;
 }
 
-.phone-screen {
-	min-height: 8em;
-	width: 100%;
-	text-align: center;
-}
-pre.console {
-	height: 10em;
-	overflow: auto;
+#middle-panel {
+  display: flex;
+  flex-direction: column;
 }
 
-.point {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  margin-left: -5px;
-  margin-top: -5px;
-  border-radius: 10px;
-  border: 1px solid red;
-  pointer-events: none;
+#right-panel {
+  display: flex;
+  flex-direction: column;
+
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
-.image-rect, .ui-rect, .image-crop {
-  position: absolute;
-  border: 2px solid red;
-  pointer-events: none;
+#left-top {
+  display: flex;
+  flex-direction: row;
 }
 
-#screen-crop-rect {
-  border: 2px solid yellow;
+#left-bottom {
+  display: flex;
+  flex-direction: row;
 }
 
-.clearfix:after {
-  content: "";
-  display: table;
-  clear: both;
+#middle-top {
+  width: 1000px;
+  display: flex;
+  flex-direction: column;
 }
 
-#imagesDiv > ul > li {
-  float: left;
-  padding: 10px;
-  list-style: none;
-  text-align: center;
-  height: 140px;
+#middle-bottom {
+  display: flex;
+  flex-direction: row;
 }
 
-#imagesDiv img {
-  max-width: 100px;
-  max-height: 100px;
-}
 
-.full {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
+/*pre.console {*/
+	/*overflow: auto;*/
+/*}*/
 
-#device-chooser {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  text-align: center;
-  padding-top: 30%;
-}
+/*#screen-crop-rect {*/
+  /*border: 2px solid yellow;*/
+/*}*/
 
-#device-chooser div {
-  width: 80%;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 10px;
-}
+/*#device-chooser {*/
+  /*!*position: absolute;*!*/
+  /*width: 100%;*/
+  /*height: 100%;*/
+  /*background: rgba(0, 0, 0, 0.8);*/
+  /*color: white;*/
+  /*text-align: center;*/
+  /*padding-top: 30%;*/
+/*}*/
 
-.box {
-  border: solid 1px red;
-}
-
-#resize-handle {
-  position: absolute;
-  width: 10px;
-  height: 100px;
-}
-
-#resize-handle:hover {
-  cursor: col-resize;
-}
+/*#device-chooser div {*/
+  /*width: 80%;*/
+  /*margin-left: auto;*/
+  /*margin-right: auto;*/
+  /*margin-bottom: 10px;*/
+/*}*/
 
 .CodeHighLightMarker {
   position:absolute;

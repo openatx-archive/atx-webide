@@ -58,7 +58,6 @@ Vue.config.delimiters = ['${', '}'];
 var vm = new Vue({
   el: '#main-content',
   data: {
-    tab: 'pythonManualDiv',
     // choose device
     choosing: false,
     android_serial_choices: [],
@@ -129,23 +128,12 @@ var vm = new Vue({
     },
     autocomplete: {
       pythonLibMethods: null
+    },
+    screenCrop: {
+      baseUrl: 'http://' + location.host + '/static_imgs/',
+      ImageList: null,
+      CropImageList: null
     }
-  },
-  computed: {
-    canvas_width: function() {
-      var margin = 30; // right 15 + left 15
-      return (this.layout.width - 2 * margin) * this.layout.right_portion / 100.0 - margin;
-    },
-    canvas_height: function() {
-      canvas.width = this.canvas_width;
-      canvas.height = this.canvas_width * this.layout.screen_ratio;
-      if (this.screen) {
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(this.screen, 0, 0, canvas.width, canvas.height);
-        this.layout.screen_scale = this.canvas_width / this.screen.width;
-      }
-      return canvas.height;
-    },
   },
   methods: {
     switchTab: function(which) {
@@ -591,12 +579,12 @@ var vm = new Vue({
         this.manual.contextmenu.img = null;
         return;
       }
-      var prefix = window.blocklyBaseURL.length;
+      var prefix = this.screenCrop.baseUrl.length;
       var imgpath = this.manual.contextmenu.img.path.substr(prefix);
       var idx = this.images.indexOf(this.manual.contextmenu.img);
       // locate idx in blocklyImageList
-      for (var i = 0, info, blkidx = -1; i < window.blocklyImageList.length; i++) {
-        info = window.blocklyImageList[i];
+      for (var i = 0, info, blkidx = -1; i < this.screenCrop.ImageList.length; i++) {
+        info = this.screenCrop.ImageList[i];
         if (info[1] == imgpath) {
           blkidx = i;
           break
@@ -610,7 +598,7 @@ var vm = new Vue({
         success: function(data) {
           self.images.splice(idx, 1);
           if (blkidx != -1) {
-            window.blocklyImageList.splice(blkidx, 1);
+            this.screenCrop.ImageList.splice(blkidx, 1);
           }
           notify('删除成功', 'success');
         },
@@ -705,27 +693,20 @@ var vm = new Vue({
     }
   },
   watch: {
-    'tab': function(newVal, oldVal) {
-      if (workspace) { Blockly.svgResize(workspace); }
-    },
-    'layout.right_portion': function(newVal, oldVal) {
-      if (workspace) { Blockly.svgResize(workspace); }
-    },
     'screen': function(newVal, oldVal) {
       var ctx = canvas.getContext('2d');
       ctx.drawImage(newVal, 0, 0, canvas.width, canvas.height);
-    },
-  },
+    }
+  }
 });
 
 /* workspace for Blockly */
 var workspace;
 /* screen canvas */
-var canvas = document.getElementById('canvas');
+// var canvas = document.getElementById('canvas');
 /* websocket client for debug */
 var ws;
 /* ace code editor */
-var pyviewer;
 var pymaneditor;
 var Range = ace.require('ace/range').Range;
 var makerId;
@@ -734,23 +715,6 @@ var makerId;
 $(function() {
 
   function initEditors() {
-    // in pythonDiv
-    pyviewer = ace.edit('python-code-viewer');
-    pyviewer.container.style.opacity = "";
-    pyviewer.$blockScrolling = Infinity;
-    pyviewer.renderer.setScrollMargin(10, 10, 10, 10);
-    pyviewer.getSession().setMode('ace/mode/python');
-    pyviewer.setOptions({
-      readOnly: true,
-      maxLines: 40,
-      fontSize: 14,
-      theme: 'ace/theme/monokai',
-      autoScrollEditorIntoView: false,
-      showPrintMargin: false,
-      enableBasicAutocompletion: true,
-      enableLiveAutocompletion: false
-    });
-
     // handle Vim write
     ace.config.loadModule('ace/keyboard/vim', function(module) {
       module.Vim.defineEx('write', 'w', function(cm, params) {
@@ -939,17 +903,17 @@ $(function() {
             vm.getDeviceChoices();
             break;
           case 'image_list':
-            window.blocklyImageList = [];
+            vm.screenCrop.ImageList = [];
             vm.images.splice(0, vm.images.length);
             for (var i = 0, info; i < data.images.length; i++) {
               info = data.images[i];
-              window.blocklyImageList.push([info['name'], info['path']]);
-              vm.images.push({ name: info['name'], path: window.blocklyBaseURL + info['path'], screen_crop_folder: info['screen_crop_folder'] ,hash: info['hash'] });
+              vm.screenCrop.ImageList.push([info['name'], info['path']]);
+              vm.images.push({ name: info['name'], path: vm.screenCrop.baseUrl + info['path'], screen_crop_folder: info['screen_crop_folder'] ,hash: info['hash'] });
             }
-            window.blocklyCropImageList = [];
+            vm.screenCrop.CropImageList = [];
             for (var i = 0, info; i < data.screenshots.length; i++) {
               info = data.screenshots[i]
-              window.blocklyCropImageList.push([info['name'], info['path']]);
+              vm.screenCrop.CropImageList.push([info['name'], info['path']]);
             }
             vm.device.latest_screen = data.latest;
             notify('图片列表已刷新', 'success');
@@ -1010,26 +974,8 @@ $(function() {
 
   /************************* init here *************************/
 
-  // Initial global value for blockly images
-  window.blocklyBaseURL = 'http://' + location.host + '/static_imgs/';
-  window.blocklyImageList = null;
-  window.blocklyCropImageList = null;
   goog.asserts.ENABLE_ASSERTS = true;
-  workspace = Blockly.inject(document.getElementById('blocklyDiv'));
-
   var screenURL = '/images/screenshot?v=t' + new Date().getTime();
-
-  // listen resize event
-  function onResize() {
-    vm.layout.width = $('#main-content').width() + 30; // with margin 15+15
-    vm.layout.height = document.documentElement.clientHeight;
-    var blocklyDivHeight = vm.layout.height - $("#blocklyDiv").offset().top;
-    var consoleHeight = $('#left-panel>div:last').height();
-    $('#blocklyDiv').height(Math.max(300, blocklyDivHeight - consoleHeight - 20));
-    Blockly.svgResize(workspace);
-  }
-  window.addEventListener('resize', onResize, false);
-  onResize();
 
   // WebSocket for debug
   vm.loadPythonCompletePattern(initEditors);
@@ -1133,45 +1079,4 @@ $(function() {
       'height': '0px'
     }).show();
   });
-
-  /*--------------- resize handle ----------------*/
-  function setupResizeHandle() {
-    $('#resize-handle').on('drag', function(evt) {
-      var x = evt.originalEvent.pageX;
-      if (x <= 0) {
-        return;
-      }
-      var p = 1 - (evt.originalEvent.pageX - 30) / (vm.layout.width - 60);
-      vm.layout.right_portion = Math.min(55, Math.max(parseInt(p * 100), 25));
-      vm.layout.width = $('#main-content').width() + 30; // with margin 15+15
-    });
-    $('#console-resize-handle').on('drag', function(evt) {
-      var pageHeight = document.body.clientHeight;
-      var handlePosTop = $('#console-resize-handle').position().top;
-      var editorHeight = $('#python-man-editor').height();
-      var consoleHeight = $('#pyconsole').height();
-      if (vm.console.editorHeight == 0) {
-        vm.console.editorHeight = editorHeight;
-      }
-      if (vm.console.consoleHeight == 0) {
-        vm.console.consoleHeight = consoleHeight;
-      }
-      var y = evt.originalEvent.offsetY;
-      var bottom = pageHeight - 150 - editorHeight - consoleHeight;
-      if (Math.abs(y) > bottom) {
-        return;
-      }
-      if (handlePosTop > pageHeight - 80) {
-        $('#console-resize-handle').position().top = pageHeight - 80;
-        if (editorHeight - y <= vm.console.editorHeight) {
-          $('#python-man-editor').height(editorHeight - y);
-        }
-        $('#pyconsole').height(consoleHeight + y);
-        return;
-      } else {
-        $('#pyconsole').height(consoleHeight + y);
-      }
-    });
-  }
-  setupResizeHandle();
 });
