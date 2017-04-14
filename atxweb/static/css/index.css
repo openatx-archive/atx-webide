@@ -7,8 +7,9 @@ html, body{
 #main-content {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
   justify-content: center;
+  /*align-items: center;*/
+  /*align-content: center;*/
 
   padding-top: 15px;
   width: 100%;
@@ -16,24 +17,25 @@ html, body{
 }
 
 #left-panel {
+  align-content: center;
   display: flex;
   flex-direction: column;
-
-  padding-left: 15px;
-  padding-right: 15px;
+  padding-left: 30px;
+  width:20%;
 }
 
 #middle-panel {
   display: flex;
   flex-direction: column;
+  flex-grow:1;
+  padding-left: 30px;
+  padding-right: 30px;
 }
 
 #right-panel {
   display: flex;
   flex-direction: column;
-
-  padding-left: 15px;
-  padding-right: 15px;
+  padding-right: 30px;
 }
 
 #left-top {
@@ -44,10 +46,25 @@ html, body{
 #left-bottom {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  height: 200px;
+  overflow: auto;
+}
+
+#left-bottom img {
+  max-width: 100px;
+  max-height: 100px;
+}
+
+#left-bottom > ul > li {
+  float: left;
+  padding: 5px;
+  list-style: none;
+  text-align: center;
 }
 
 #middle-top {
-  width: 1000px;
+  width: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -57,14 +74,39 @@ html, body{
   flex-direction: row;
 }
 
+pre.console {
+  height: 10em;
+  width: 100%;
+  overflow: auto;
+}
 
-/*pre.console {*/
-	/*overflow: auto;*/
-/*}*/
+a {
+  cursor: pointer;
+}
+ul {
+  padding-left: 20px;
+}
 
-/*#screen-crop-rect {*/
-  /*border: 2px solid yellow;*/
-/*}*/
+.point {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 10px;
+  border: 1px solid red;
+  pointer-events: none;
+}
+
+.image-rect, .ui-rect, .image-crop {
+  position: absolute;
+  border: 2px solid red;
+  pointer-events: none;
+}
+
+#screen-crop-rect {
+  border: 2px solid yellow;
+}
 
 /*#device-chooser {*/
   /*!*position: absolute;*!*/

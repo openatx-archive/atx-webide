@@ -908,7 +908,13 @@ $(function() {
             for (var i = 0, info; i < data.images.length; i++) {
               info = data.images[i];
               vm.screenCrop.ImageList.push([info['name'], info['path']]);
-              vm.images.push({ name: info['name'], path: vm.screenCrop.baseUrl + info['path'], screen_crop_folder: info['screen_crop_folder'] ,hash: info['hash'] });
+              vm.images.push({
+                  name: info['name'],
+                  //using to display short name in front
+                  display_name: info['name'].split(".")[0],
+                  path: vm.screenCrop.baseUrl + info['path'],
+                  screen_crop_folder: info['screen_crop_folder'],
+                  hash: info['hash'] });
             }
             vm.screenCrop.CropImageList = [];
             for (var i = 0, info; i < data.screenshots.length; i++) {
