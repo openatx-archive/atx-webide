@@ -27,7 +27,50 @@
     </div>
     <div id="middle-panel">
       <div id="middle-top">
-        <pre id="python-man-editor" style="opacity:0"></pre>
+        <div id="editor-button">
+          <li v-bind:class='{"disabled":manual.running}' class="pull-right" @click="runPyManualCodeToLine">
+            <a>
+              <span class="glyphicon glyphicon-step-forward"></span>运行到本行</a>
+          </li>
+          <li v-if="manual.running" class="pull-right" @click="stopPyManualCode">
+            <a>
+              <span class="glyphicon glyphicon-stop"></span>停止</a>
+          </li>
+          <li v-else class="pull-right" @click="runPyManualCode">
+            <a>
+              <span class="glyphicon glyphicon-play"></span>运行</a>
+          </li>
+          <li class="pull-right" @click="savePyManualCode">
+            <a>
+              <span class="glyphicon glyphicon-floppy-save"></span>保存</a>
+          </li>
+          <li class="pull-right" @click="loadPyManualCode">
+            <a>
+              <span class="glyphicon glyphicon-open-file"></span>加载</a>
+          </li>
+          <li class="pull-right" @click="createCodeFile">
+            <a>
+              <span class="glyphicon glyphicon-file"></span>新建</a>
+          </li>
+          <li class="pull-left">
+              <a>
+                <span>当前文件：</span>
+                <select v-model="manual.selected" @change="changeFileItem(rowId, $event)">
+                  <option v-for="option in manual.options" v-bind:value="option.value">
+                    ${ option.value }
+                  </option>
+                </select>
+              </a>
+            </li>
+          <li class="pull-left" @click='toggleManualVimMode'>
+            <a>
+              Vim模式: ${ manual.vimmode ? 'ON' : 'OFF'}
+            </a>
+          </li>
+        </div>
+        <div id="editor">
+          <pre id="python-man-editor" style="opacity:0"></pre>
+        </div>
       </div>
       <div id="middle-bottom">
         <pre class='console' id="pyconsole"></pre>
@@ -47,7 +90,7 @@
             </h4>
         </div>
         <div id="right-bottom">
-            <div id="device-chooser">
+          <div id="device-chooser">
               <p>连接设备</p>
               <form>
                 <div class="center-block">
@@ -87,7 +130,7 @@
             <canvas id="canvas" @contextmenu="saveScreenCropRightClick">
               Browser not support canvas
             </canvas>
-          </div>
+        </div>
       </div>
   </div>
 

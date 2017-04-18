@@ -69,6 +69,12 @@ html, body{
   flex-direction: column;
 }
 
+#middle-top li{
+  padding: 10px;
+  list-style: none;
+  text-align: center;
+}
+
 #middle-bottom {
   display: flex;
   flex-direction: row;
@@ -98,6 +104,11 @@ ul {
   pointer-events: none;
 }
 
+#right-bottom {
+  display: flex;
+  flex-direction: row;
+}
+
 .image-rect, .ui-rect, .image-crop {
   position: absolute;
   border: 2px solid red;
@@ -108,22 +119,35 @@ ul {
   border: 2px solid yellow;
 }
 
-/*#device-chooser {*/
-  /*!*position: absolute;*!*/
-  /*width: 100%;*/
-  /*height: 100%;*/
-  /*background: rgba(0, 0, 0, 0.8);*/
-  /*color: white;*/
-  /*text-align: center;*/
-  /*padding-top: 30%;*/
-/*}*/
+.phone-screen {
+	min-height: 8em;
+	width: 100%;
+	text-align: center;
+}
 
-/*#device-chooser div {*/
-  /*width: 80%;*/
-  /*margin-left: auto;*/
-  /*margin-right: auto;*/
-  /*margin-bottom: 10px;*/
-/*}*/
+.full {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#device-chooser {
+  /*position: absolute;*/
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  text-align: center;
+  padding-top: 30%;
+}
+
+#device-chooser div {
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 10px;
+}
 
 .CodeHighLightMarker {
   position:absolute;
