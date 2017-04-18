@@ -36,6 +36,7 @@ html, body{
   display: flex;
   flex-direction: column;
   padding-right: 30px;
+  width: 450px;
 }
 
 #left-top {
@@ -77,7 +78,13 @@ html, body{
 
 #middle-bottom {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+}
+
+#right-upper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 pre.console {
@@ -105,8 +112,26 @@ ul {
 }
 
 #right-bottom {
-  display: flex;
-  flex-direction: row;
+  padding-top: 10px;
+  height: 100%;
+  width: 100%;
+}
+
+#device-chooser {
+  /*position: absolute;*/
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  text-align: center;
+  padding-top: 30%;
+}
+
+#device-chooser div {
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 10px;
 }
 
 .image-rect, .ui-rect, .image-crop {
@@ -130,23 +155,6 @@ ul {
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-#device-chooser {
-  /*position: absolute;*/
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  text-align: center;
-  padding-top: 30%;
-}
-
-#device-chooser div {
-  width: 80%;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 10px;
 }
 
 .CodeHighLightMarker {

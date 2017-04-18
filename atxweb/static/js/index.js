@@ -135,6 +135,21 @@ var vm = new Vue({
       CropImageList: null
     }
   },
+  computed: {
+    canvas_width: function() {
+      return document.getElementById('right-bottom').offsetWidth;
+    },
+    canvas_height: function() {
+      canvas.width = this.canvas_width;
+      if (this.screen) {
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(this.screen, 0, 0, canvas.width, canvas.height);
+        this.layout.screen_scale = this.canvas_width / this.screen.width;
+        canvas.height = this.screen.height * this.layout.screen_scale;
+      }
+      return canvas.height;
+    }
+  },
   methods: {
     switchTab: function(which) {
       if (which == this.tab) {
