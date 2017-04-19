@@ -358,7 +358,7 @@ var vm = new Vue({
       if (this.device.latest_screen == '' || this.overlays.crop_bounds.bound === null) {
         return;
       }
-      evt.preventDefault()
+      evt.preventDefault();
       this.saveScreenCrop();
     },
     clearConsole: function() {
@@ -1056,8 +1056,8 @@ $(function() {
       $rect = $("#screen-crop");
     }
     // update rect position
-    var left = bounds.start.pageX - rect.left,
-      top = bounds.start.pageY - rect.top,
+    var left = bounds.start.pageX,
+      top = bounds.start.pageY,
       width = Math.max(bounds.end.pageX - bounds.start.pageX, 10),
       height = Math.max(bounds.end.pageY - bounds.start.pageY, 10);
     $rect.show();

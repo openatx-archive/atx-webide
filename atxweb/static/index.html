@@ -91,7 +91,7 @@
     </div>
     <div id="right-panel">
         <div id = "right-upper">
-          <h4>Screen<span style="font-size:10px">(${resolution.displayMessage})</span>
+          <h4>Screen
             <button type="button" class="btn btn-default btn-xs" @click="saveScreenCrop">保存选区</button>
             <button type="button" class="btn btn-default btn-xs" @click="setScreenCropFolder">设置目录</button>
             <button v-if="device.refreshing" type="button" class="btn btn-default btn-xs" disabled="disabled">获取设备列表中..</button>
@@ -100,8 +100,9 @@
               <button v-else type="button" class="btn btn-default btn-xs" @click="openChooseDevice">切换</button>
             </template>
             <button type="button" class="btn btn-default btn-xs" @click="refreshScreen" v-bind:disabled="refreshing || autorefresh">刷新</button>
-            <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新">
-            <span style="font-size:10px;text-align:right">(${resolution.positionX}, ${resolution.positionY})</span>
+            <input style="display:inline;" type="checkbox" class="checkbox" @click="checkAutoRefreshScreen($event)" title="自动刷新"></br>
+            <span style="font-size:15px">分辨率：${resolution.displayMessage}</span>
+            <span style="font-size:15px;text-align:right">实时坐标(${resolution.positionX}, ${resolution.positionY})</span>
           </h4>
         </div>
         <div id="right-bottom" v-bind:style="{'width':canvas_width+'px', 'height':canvas_height+'px'}">
@@ -138,10 +139,9 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"></svg>
             </div>
           </div>
-          <!--&lt;!&ndash; #screen-overlays &ndash;&gt;-->
           <div id="screen-crop" class="image-crop"></div>
           <div id="screen-crop-rect" class="image-crop"></div>
-          <canvas id="canvas"  @contextmenu="saveScreenCropRightClick">
+          <canvas id="canvas" @contextmenu="saveScreenCropRightClick">
             Browser not support canvas
           </canvas>
         </div>
