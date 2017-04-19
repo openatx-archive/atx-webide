@@ -995,7 +995,6 @@ $(function() {
 
   /************************* init here *************************/
 
-  goog.asserts.ENABLE_ASSERTS = true;
   var screenURL = '/images/screenshot?v=t' + new Date().getTime();
 
   // WebSocket for debug
