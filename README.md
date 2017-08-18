@@ -7,17 +7,10 @@ Web-based visual editor for generating atx testcase.
 - tornado (https://pypi.python.org/pypi/tornado/)
 
 ## Installation
-using pip:
+```bash
+$ git clone https://github.com/openatx/atx-webide
+$ pip install -e atx-webide
 ```
-$ pip install -U atx-webide
-```
-
-or clone this repository and run:
-
-```python setup.py install```
-
-if you got "TypeError: decoding Unicode is not supported" in easy_install,
-run ```pip install -U setuptools``` first.
 
 ##Features
 1. what you see is what you get
