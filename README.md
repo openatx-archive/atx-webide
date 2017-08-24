@@ -8,8 +8,7 @@ Web-based visual editor for generating atx testcase.
 
 ## Installation
 ```bash
-$ git clone https://github.com/openatx/atx-webide
-$ pip install -e atx-webide
+$ pip install atx-webide==0.1.1.dev72
 ```
 
 ##Features
