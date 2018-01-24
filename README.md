@@ -1,3 +1,6 @@
+# Deprecated
+Please do not ask questions about this project anymore.
+
 ## Intro
 Web-based visual editor for generating atx testcase.
 
