@@ -1,5 +1,8 @@
 #-*- encoding: utf-8 -*-
 
+from __future__ import print_function
+from future.builtins import list, str
+
 import os
 import functools
 import sys
@@ -8,10 +11,8 @@ import webbrowser
 import socket
 import time
 import json
-import traceback
 import locale
 import re
-import imp
 import importlib
 
 import cv2
@@ -28,8 +29,8 @@ except:
 
 try:
     import atx
-except:
-    print "AutomatorX not installed! Please run `pip install --upgrade atx`"
+except Exception as e:
+    print("AutomatorX not installed! Please run `pip install --upgrade atx`")
     sys.exit(1)
 
 from atx import logutils
@@ -60,7 +61,7 @@ def read_file(filename, default=''):
         return f.read()
 
 def write_file(filename, content):
-    with open(filename, 'w') as f:
+    with open(filename, 'wb') as f:
         f.write(content.encode('utf-8'))
 
 def get_valid_port():
@@ -107,7 +108,7 @@ class ImageHandler(tornado.web.RequestHandler):
         imgpath = os.path.abspath(os.path.join('.', imgpath))
         try:
             os.remove(imgpath)
-            print 'deleted', imgpath
+            print('deleted', imgpath)
         except (IOError, WindowsError):
             self.set_status(404)
             self.write('Image (%s) Not Found' % imgpath)
@@ -118,7 +119,7 @@ class MainHandler(tornado.web.RequestHandler):
         self.render('index.html')
 
     def post(self):
-        print self.get_argument('xml_text')
+        print(self.get_argument('xml_text'))
         self.write("Good")
 
 
@@ -132,6 +133,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         self._proc = None
 
     def write_console(self, text):
+        if isinstance(text, bytes):
+            text = text.decode("utf-8")
         self.write_message({'type': 'console', 'output': text})
 
     def write_lineno(self, lineno):
@@ -147,19 +150,26 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             with open(filename, 'w+') as f:
                 f.truncate()
 
-        with open(filename, 'a') as f:
+        with open(filename, 'ab') as f:
             f.write(code.encode('utf-8'))
 
         env = os.environ.copy()
-        print atx_settings
+        print(atx_settings)
         env['SERIAL'] = atx_settings.get('device_url', '')
         start_time = time.time()
-        self._proc = subprocess.Popen(['python', '-u', os.path.join(__dir__, 'common/trace.py'), '-f', filename],
+        trace_filename = ''
+        if sys.version_info[0] == 2:
+            trace_filename = os.path.join(__dir__, 'common/trace_python2.py')
+        else:
+            trace_filename = os.path.join(__dir__, 'common/trace_python3.py')
+        self._proc = subprocess.Popen(['python', '-u', trace_filename, '-f', filename],
             bufsize=1,
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
         for line in iter(self._proc.stdout.readline, b''):
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
             if line.startswith('$$lineno:'):
                 self.write_lineno(line[10:])
             else:
@@ -176,8 +186,8 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
         message = None
         try:
             message = json.loads(message_text)
-        except:
-            print 'Invalid message from browser:', message_text
+        except Exception as e:
+            print('Invalid message from browser:', message_text)
             return
         command = message.get('command')
 
@@ -204,9 +214,9 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
                         'hash': '{}'.format(os.path.getmtime(realpath)).replace('.', '-')
                     })
             self.write_message({
-                'type': 'image_list', 
-                'images': images, 
-                'screenshots': screenshots, 
+                'type': 'image_list',
+                'images': images,
+                'screenshots': screenshots,
                 'latest': latest_screen
             })
         elif command == 'stop':
@@ -245,7 +255,7 @@ class ManualCodeHandler(tornado.web.RequestHandler):
                     ])
                     f.write(default)
                     self.write({'status': 'ok', 'msg': 'success'})
-                except Exception, e:
+                except Exception as e:
                     log.error('error in create code file: ', e)
                     self.write({'status': 'error', 'msg': 'error'})
             else:
@@ -264,7 +274,7 @@ class ManualCodeHandler(tornado.web.RequestHandler):
                 'import atx\n\n',
                 'd = atx.connect(os.getenv("SERIAL"))',
             ])
-            ret['man_text'] = read_file(filename, default=default)
+            ret['man_text'] = read_file(filename, default=default).decode("utf-8")
             if not os.path.isfile(filename):
                 write_file(filename, default)
             ret['code_file'] = []
@@ -290,8 +300,8 @@ class ScreenCropFolderHandler(tornado.web.RequestHandler):
             if not os.path.exists(foldername):
                 try:
                     os.makedirs(foldername)
-                except Exception, e:
-                    print 'error in create image folder: ', e
+                except Exception as e:
+                    print('error in create image folder: ', e)
                     return
             screen_crop_folder[self.request.remote_ip] = foldername
             global IMAGE_PATH
@@ -329,7 +339,7 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         image = imutils.crop(image, l, t, r, b)
         if self.request.remote_ip not in screen_crop_folder:
             screen_crop_folder[self.request.remote_ip] = '.'
-        cv2.imwrite(os.path.join(screen_crop_folder[self.request.remote_ip], filename), image)
+        cv2.imwrite(os.path.join(screen_crop_folder[self.request.remote_ip], filename.decode('utf8')).replace('\\', '/'), image)
         self.write({'status': 'ok'})
 
 class DeviceHandler(tornado.web.RequestHandler):
@@ -339,9 +349,11 @@ class DeviceHandler(tornado.web.RequestHandler):
         global device
         try:
             d = AdbClient().devices().keys()
-            print 'android device list:', d
+            if not isinstance(d, list):
+                d = list(d)
+
         except EnvironmentError as e:
-            print 'ERROR:', str(e)
+            print('ERROR:', str(e))
             d = []
         if hasattr(device, 'serial'):
             self.write({'android': d, 'ios': [], 'serial': device.serial})

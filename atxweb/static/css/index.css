@@ -1,6 +1,96 @@
 html, body{
   height: 100%;
-  overflow: hidden;
+  width: 100%;
+  overflow: scroll;
+}
+
+#main-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  /*align-items: center;*/
+  /*align-content: center;*/
+
+  padding-top: 15px;
+  width: 100%;
+  height: 100%;
+}
+
+#left-panel {
+  align-content: center;
+  display: flex;
+  flex-direction: column;
+  padding-left: 30px;
+  width:20%;
+}
+
+#middle-panel {
+  display: flex;
+  flex-direction: column;
+  flex-grow:1;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+#right-panel {
+  display: flex;
+  flex-direction: column;
+  padding-right: 30px;
+  width: 400px;
+}
+
+#left-top {
+  display: flex;
+  flex-direction: row;
+}
+
+#left-bottom {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  height: 200px;
+  overflow: auto;
+}
+
+#left-bottom img {
+  max-width: 80px;
+  max-height: 80px;
+}
+
+#left-bottom > ul > li {
+  float: left;
+  padding: 5px;
+  list-style: none;
+  text-align: center;
+}
+
+#middle-top {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#middle-top li{
+  padding: 10px;
+  list-style: none;
+  text-align: center;
+}
+
+#middle-bottom {
+  display: flex;
+  flex-direction: column;
+}
+
+#right-upper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+pre.console {
+  height: 10em;
+  width: 100%;
+  overflow: auto;
 }
 
 a {
@@ -8,33 +98,6 @@ a {
 }
 ul {
   padding-left: 20px;
-}
-
-li {
-  list-style: none;
-}
-
-#main-content {
-  min-width: 1000px;
-  padding-top: 10px;
-}
-
-#left-panel, #right-panel {
-  float: left;
-  position: relative;
-  min-height: 1px;
-  padding-left: 15px;
-  padding-right: 15px;
-}
-
-.phone-screen {
-	min-height: 8em;
-	width: 100%;
-	text-align: center;
-}
-pre.console {
-	height: 10em;
-	overflow: auto;
 }
 
 .point {
@@ -48,46 +111,15 @@ pre.console {
   pointer-events: none;
 }
 
-.image-rect, .ui-rect, .image-crop {
-  position: absolute;
-  border: 2px solid red;
-  pointer-events: none;
-}
-
-#screen-crop-rect {
-  border: 2px solid yellow;
-}
-
-.clearfix:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-#imagesDiv > ul > li {
-  float: left;
-  padding: 10px;
-  list-style: none;
-  text-align: center;
-  height: 140px;
-}
-
-#imagesDiv img {
-  max-width: 100px;
-  max-height: 100px;
-}
-
-.full {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+#right-bottom {
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 
 #device-chooser {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+  position: relative;
   background: rgba(0, 0, 0, 0.8);
   color: white;
   text-align: center;
@@ -101,18 +133,27 @@ pre.console {
   margin-bottom: 10px;
 }
 
-.box {
-  border: solid 1px red;
-}
-
-#resize-handle {
+.image-rect, .ui-rect, .image-crop {
   position: absolute;
-  width: 10px;
-  height: 100px;
+  border: 2px solid red;
+  pointer-events: none;
 }
 
-#resize-handle:hover {
-  cursor: col-resize;
+#screen-crop-rect {
+  border: 2px solid yellow;
+}
+
+.phone-screen {
+	min-height: 8em;
+	width: 100%;
+	text-align: center;
+}
+
+.full {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .CodeHighLightMarker {
